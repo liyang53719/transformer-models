@@ -5,14 +5,25 @@ import numpy as np
 import os
 
 def export_tinyllama():
-    print("Loading TinyLlama-1.1B-Chat (this might download data)...")
-    model_id = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
+    # Check if local model directory exists (from llama.download)
+    local_model_dir = "tinyllama_model"
+    if os.path.exists(local_model_dir) and os.path.isdir(local_model_dir):
+        print(f"Found local model folder '{local_model_dir}'. Loading from there...")
+        model_id = local_model_dir
+    else:
+        print("Local model folder not found. Loading TinyLlama-1.1B-Chat from HuggingFace Hub...")
+        model_id = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
     
     try:
+        # local_files_only=True is redundant if path is a directory, but good for safety if it falls back to repo ID
         tokenizer = AutoTokenizer.from_pretrained(model_id, local_files_only=True)
         model = AutoModelForCausalLM.from_pretrained(model_id, torch_dtype=torch.float32, local_files_only=True, attn_implementation="eager")
-    except Exception:
-        print("Local load failed, trying online...")
+    except Exception as e:
+        print(f"Local load failed: {e}")
+        if model_id == local_model_dir:
+            raise RuntimeError("Could not load from local directory. Please check if download was successful.")
+        
+        print("Trying online...")
         tokenizer = AutoTokenizer.from_pretrained(model_id)
         model = AutoModelForCausalLM.from_pretrained(model_id, torch_dtype=torch.float32, attn_implementation="eager")
 

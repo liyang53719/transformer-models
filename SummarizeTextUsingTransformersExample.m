@@ -20,10 +20,29 @@ mdl = gpt2;
 %% Load Data
 % Extract the help text for the |eigs| function.
 
-inputText = help('eigs')
+% inputText = help('eigs')
+inputText = "The simplest, fastest repository for training/finetuning medium-sized GPTs. It is a rewrite of minGPT that prioritizes teeth over education. Still under active development, but currently the file train.py reproduces GPT-2 (124M) on OpenWebText, running on a single 8XA100 40GB node in about 4 days of training. The code itself is plain and readable: train.py is a ~300-line boilerplate training loop and model.py a ~300-line GPT model definition, which can optionally load the GPT-2 weights from OpenAI. That's it.";
 
 %% Generate Summary
 % Summarize the text using the |generateSummary| function.
 
 rng('default')
+tic;
 summary = generateSummary(mdl,inputText)
+toc
+
+%% 3. Load MATLAB Model
+disp("Loading MATLAB Model...");
+modelPath = llama.download("TinyLlama/TinyLlama-1.1B-Chat-v1.0");
+mdl_tinny_llm.Parameters = llama.load('tinyllama_params.mat');
+mdl_tinny_llm.Tokenizer = llama.tokenizer.LlamaTokenizer(modelPath);
+
+%% 4. Generate Summary (MATLAB)
+disp("Running MATLAB Inference...");
+tic;
+% Use Greedy (TopK=1) for deterministic output, useful for comparison
+summary_matlab = generateSummary_tinyllama(mdl_tinny_llm, inputText, ...
+    'TopK', 1, ...
+    'MaxNewTokens', 50, ...
+    'PromptTemplate', "Summarize the following text:\n%s\n\nSummary:")
+toc

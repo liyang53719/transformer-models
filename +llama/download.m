@@ -70,5 +70,49 @@ function modelPath = download(modelName, destination)
         fprintf("Model already exists locally at: %s\n", destination);
     end
     
+    % Automatically run the preparation/conversion script to generate .mat files
+    % This is expected to be in 'tools/prepare_tinyllama.py' relative to project root
+    scriptPath = fullfile("tools", "prepare_tinyllama.py");
+    paramsFile = "tinyllama_params.mat";
+    
+    % Only run if script exists. 
+    % Also check if params already exist? 
+    % The user requested "automatically execute after download", implying we should likely ensure it runs or at least ensure the output exists.
+    % We will run it if params.mat is MISSING or if we just performed a fresh download (though we don't track that easy boolean here, let's just check file existence)
+    
+    if exist(scriptPath, 'file')
+        if ~exist(paramsFile, 'file') || ~exist(destination, 'dir') 
+             % Check destination 'dir' is weird condition here, but basically if we just downloaded we might want to run.
+             % Simplest logic: If params don't exist, run. 
+             % What if user wants to update? 
+             % Let's run it always if script exists, it is relatively fast if verified.
+             
+             fprintf("Executing conversion script '%s'...\n", scriptPath);
+             
+             % Determine Python Executable
+             pe = pyenv;
+             if pe.Status == "Loaded"
+                 pyExe = pe.Executable;
+             else
+                 pyExe = "python"; % Default fallback
+             end
+             
+             % Run script
+             cmd = sprintf('"%s" "%s"', pyExe, scriptPath);
+             [status, cmdout] = system(cmd);
+             
+             if status ~= 0
+                 warning("llama:download:ConversionFailed", ...
+                     "Model downloaded, but weight conversion failed.\nCommand: %s\nOutput:\n%s", cmd, cmdout);
+             else
+                 fprintf("Weight conversion complete.\n");
+             end
+        else
+            fprintf("Weights already converted ('%s' exists).\n", paramsFile);
+        end
+    else
+        warning("Preparation script '%s' not found. Please run parameter conversion manually.", scriptPath);
+    end
+    
     modelPath = destination;
 end
