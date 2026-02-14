@@ -16,22 +16,21 @@ if nargin < 3
     epsilon = 1e-6;
 end
 
-epsilon = single(epsilon);
-if ~isa(X, 'single')
-    X = single(X);
-end
-if ~isa(g, 'single')
-    g = single(g);
-end
+normalizationDimension = 1;
 
+% Ensure scaling vector g is a column vector aligned with first dimension of X
 if isrow(g)
     g = g(:);
 end
 
-normalizationDimension = 1;
+% Check compatibility
+if size(g,1) ~= size(X,1)
+     error('transformer:rmsNormalization:DimensionMismatch', ...
+        'Scale vector g length (%d) must match input feature dimension (%d).', size(g,1), size(X,1));
+end
 
 % Calculate RMS
-% Mean of squares
+% Mean of squares along feature dimension
 ms = mean(X.^2, normalizationDimension);
 rms = sqrt(ms + epsilon);
 

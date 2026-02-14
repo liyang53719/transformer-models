@@ -37,18 +37,41 @@ function [X_out, past_key_value, attn_weights] = attentionGQA(X, past_key_value,
     xk = weights.k_proj * X; % [numKVHeads*headDim, seqLen, batch]
     xv = weights.v_proj * X; % [numKVHeads*headDim, seqLen, batch]
     
+    % Add Bias if present (Qwen/BERT style)
+    if isfield(weights, 'q_bias'), xq = xq + weights.q_bias; end
+    if isfield(weights, 'k_bias'), xk = xk + weights.k_bias; end
+    if isfield(weights, 'v_bias'), xv = xv + weights.v_bias; end
+    
     % Reshape for heads
     % xq: [headDim, numHeads, seqLen, batch]
     xq = reshape(xq, [headDim, numHeads, seqLen, batchSize]);
     xk = reshape(xk, [headDim, numKVHeads, seqLen, batchSize]);
     xv = reshape(xv, [headDim, numKVHeads, seqLen, batchSize]);
-    
+
+    % Determine current position offset from past cache
+    startPos = 0;
+    if ~isempty(past_key_value)
+        startPos = size(past_key_value.keys, 3);
+    end
+
     % 2. Apply RoPE (Rotary Embeddings)
     % Convert to complex for easy rotation
     % Assumes headDim is even.
-    % Llama / Hugging Face uses "pair via split halves" strategy.
-    % Pairs are (x[i], x[i + dim/2]).
     
+    ropeTheta = 10000;
+    if isfield(hyperParameters, 'RopeTheta')
+        ropeTheta = hyperParameters.RopeTheta;
+    end
+    
+    if isempty(freqs_cis)
+        % Generate freqs for [startPos ... startPos+seqLen-1]
+        % We generate 0..end and slice, or careful gen
+        % precomputeFreqsCis generates 0..maxSeqLen.
+        
+        full_cis = transformer.layer.precomputeFreqsCis(headDim, startPos + seqLen, ropeTheta);
+        freqs_cis = full_cis(:, startPos+1:end);
+    end
+
     half = headDim / 2;
     xq_real = xq(1:half, :, :, :);
     xq_imag = xq(half+1:end, :, :, :);
@@ -221,6 +244,9 @@ function [X_out, past_key_value, attn_weights] = attentionGQA(X, past_key_value,
     attn_output_cat = reshape(attn_output, headDim*numHeads, seqLen, batchSize);
     
     X_out = weights.o_proj * attn_output_cat;
+    
+    % Add O Bias if present
+    if isfield(weights, 'o_bias'), X_out = X_out + weights.o_bias; end
     
     % Prepare attention weights output
     % [seqLen, cacheLen, H*B] -> [numHeads, seqLen, cacheLen, batchSize]
