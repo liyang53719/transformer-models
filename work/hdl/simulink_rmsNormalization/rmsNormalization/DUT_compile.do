@@ -1,0 +1,14 @@
+vlib work
+vmap -c
+vlog  nfp_add_single.v
+vlog  BeatReduce.v
+vlog  InvRmsLatch.v
+vlog  nfp_mul_single.v
+vlog  LaneMultiply.v
+vlog  nfp_sqrt_single.v
+vlog  nfp_div_single.v
+vlog  ScalarRsqrt.v
+vlog  SquareBeat.v
+vlog  BeatAccumulator.v
+vlog  Controller.v
+vlog  DUT.v
