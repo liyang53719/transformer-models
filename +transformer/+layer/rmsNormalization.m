@@ -11,6 +11,7 @@ function Z = rmsNormalization(X, g, epsilon)
 %
 %   Outputs:
 %       Z       - A numFeatures-by-numInputSubwords-by-numObs output array.
+do_dump = 0;
 
 if nargin < 3
     epsilon = 1e-6;
@@ -37,5 +38,13 @@ rms = sqrt(ms + epsilon);
 % Normalize and scale
 % X ./ rms broadcasts along dim 1
 Z = (X ./ rms) .* g;
+
+if do_dump 
+    X_in = single(extractdata(X));
+    G_in = single(extractdata(g));
+    X_out = single(extractdata(Z));
+    epsilon = single(epsilon);
+    save( "transformer_simulink/layer/rmsnorm/qwen2_rmsNormalization.mat" , "X_in","X_out","G_in","epsilon") 
+end
 
 end
