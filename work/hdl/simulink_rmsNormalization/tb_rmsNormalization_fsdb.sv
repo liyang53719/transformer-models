@@ -12,13 +12,15 @@ module tb_rmsNormalization_fsdb;
   reg clk_enable = 1'b1;
   reg reset_1 = 1'b0;
   reg start = 1'b0;
-  reg [31:0] cfgGammaBeat [0:LANES-1];
+  reg [31:0] cfgGammaBeat_lane [0:LANES-1];
+  reg [255:0] cfgGammaBeat;
   reg cfgGammaValid = 1'b0;
-  reg [31:0] ddrDataBeat [0:LANES-1];
+  reg [31:0] ddrDataBeat_lane [0:LANES-1];
+  reg [255:0] ddrDataBeat;
   reg ddrDataValid = 1'b0;
 
   wire ce_out;
-  wire [31:0] outBeat [0:LANES-1];
+  wire [255:0] outBeat;
   wire outValid;
   wire [15:0] ddrReadAddr;
   wire ddrReadEn;
@@ -30,39 +32,18 @@ module tb_rmsNormalization_fsdb;
   integer pending_addr = 0;
   reg pending_valid = 1'b0;
 
-  DUT dut (
+  DUTPacked dut (
     .clk(clk),
     .reset(reset),
     .clk_enable(clk_enable),
     .reset_1(reset_1),
     .start(start),
-    .cfgGammaBeat_0(cfgGammaBeat[0]),
-    .cfgGammaBeat_1(cfgGammaBeat[1]),
-    .cfgGammaBeat_2(cfgGammaBeat[2]),
-    .cfgGammaBeat_3(cfgGammaBeat[3]),
-    .cfgGammaBeat_4(cfgGammaBeat[4]),
-    .cfgGammaBeat_5(cfgGammaBeat[5]),
-    .cfgGammaBeat_6(cfgGammaBeat[6]),
-    .cfgGammaBeat_7(cfgGammaBeat[7]),
+    .cfgGammaBeat(cfgGammaBeat),
     .cfgGammaValid(cfgGammaValid),
-    .ddrDataBeat_0(ddrDataBeat[0]),
-    .ddrDataBeat_1(ddrDataBeat[1]),
-    .ddrDataBeat_2(ddrDataBeat[2]),
-    .ddrDataBeat_3(ddrDataBeat[3]),
-    .ddrDataBeat_4(ddrDataBeat[4]),
-    .ddrDataBeat_5(ddrDataBeat[5]),
-    .ddrDataBeat_6(ddrDataBeat[6]),
-    .ddrDataBeat_7(ddrDataBeat[7]),
+    .ddrDataBeat(ddrDataBeat),
     .ddrDataValid(ddrDataValid),
     .ce_out(ce_out),
-    .outBeat_0(outBeat[0]),
-    .outBeat_1(outBeat[1]),
-    .outBeat_2(outBeat[2]),
-    .outBeat_3(outBeat[3]),
-    .outBeat_4(outBeat[4]),
-    .outBeat_5(outBeat[5]),
-    .outBeat_6(outBeat[6]),
-    .outBeat_7(outBeat[7]),
+    .outBeat(outBeat),
     .outValid(outValid),
     .ddrReadAddr(ddrReadAddr),
     .ddrReadEn(ddrReadEn),
@@ -96,14 +77,16 @@ module tb_rmsNormalization_fsdb;
     integer lane_idx;
     begin
       for (lane_idx = 0; lane_idx < LANES; lane_idx = lane_idx + 1) begin
-        cfgGammaBeat[lane_idx] = gamma_word(beat_idx, lane_idx);
+        cfgGammaBeat_lane[lane_idx] = gamma_word(beat_idx, lane_idx);
       end
+      cfgGammaBeat = {cfgGammaBeat_lane[7], cfgGammaBeat_lane[6], cfgGammaBeat_lane[5], cfgGammaBeat_lane[4], cfgGammaBeat_lane[3], cfgGammaBeat_lane[2], cfgGammaBeat_lane[1], cfgGammaBeat_lane[0]};
       cfgGammaValid = 1'b1;
       @(negedge clk);
       cfgGammaValid = 1'b0;
       for (lane_idx = 0; lane_idx < LANES; lane_idx = lane_idx + 1) begin
-        cfgGammaBeat[lane_idx] = 32'h00000000;
+        cfgGammaBeat_lane[lane_idx] = 32'h00000000;
       end
+      cfgGammaBeat = 256'h0;
     end
   endtask
 
@@ -112,8 +95,9 @@ module tb_rmsNormalization_fsdb;
     begin
       ddrDataValid = 1'b0;
       for (lane_idx = 0; lane_idx < LANES; lane_idx = lane_idx + 1) begin
-        ddrDataBeat[lane_idx] = 32'h00000000;
+        ddrDataBeat_lane[lane_idx] = 32'h00000000;
       end
+      ddrDataBeat = 256'h0;
     end
   endtask
 
@@ -127,8 +111,9 @@ module tb_rmsNormalization_fsdb;
       beat_idx = pending_addr % BEATS_PER_TOKEN;
       ddrDataValid = 1'b1;
       for (lane_idx = 0; lane_idx < LANES; lane_idx = lane_idx + 1) begin
-        ddrDataBeat[lane_idx] = x_word(token_idx, beat_idx, lane_idx);
+        ddrDataBeat_lane[lane_idx] = x_word(token_idx, beat_idx, lane_idx);
       end
+      ddrDataBeat = {ddrDataBeat_lane[7], ddrDataBeat_lane[6], ddrDataBeat_lane[5], ddrDataBeat_lane[4], ddrDataBeat_lane[3], ddrDataBeat_lane[2], ddrDataBeat_lane[1], ddrDataBeat_lane[0]};
     end else begin
       clear_ddr_bus();
     end
@@ -162,9 +147,11 @@ module tb_rmsNormalization_fsdb;
     $fsdbDumpvars(0, tb_rmsNormalization_fsdb, "+all");
 
     for (lane_idx = 0; lane_idx < LANES; lane_idx = lane_idx + 1) begin
-      cfgGammaBeat[lane_idx] = 32'h00000000;
-      ddrDataBeat[lane_idx] = 32'h00000000;
+      cfgGammaBeat_lane[lane_idx] = 32'h00000000;
+      ddrDataBeat_lane[lane_idx] = 32'h00000000;
     end
+    cfgGammaBeat = 256'h0;
+    ddrDataBeat = 256'h0;
 
     repeat (5) @(negedge clk);
     reset <= 1'b0;

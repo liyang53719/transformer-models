@@ -18,6 +18,48 @@ Summary
 </font>
 
 </a>
+<br /><br />'BalanceDelays' is set to 'off' for the following subsystems. This option is deprecated and no longer recommended since it can introduce functional differences between the HDL code and original model. Click on the link to <a href="matlab:hdlset_param('rmsNormalization/DUTPacked/OutBeatPack/Pack', 'BalanceDelays', 'inherit');hdlset_param('rmsNormalization/DUTPacked/CoreDUT/Controller', 'BalanceDelays', 'inherit');hdlset_param('rmsNormalization/DUTPacked/CfgBeatUnpack/Unpack', 'BalanceDelays', 'inherit');hdlset_param('rmsNormalization/DUTPacked/OutBeatPack', 'BalanceDelays', 'inherit');hdlset_param('rmsNormalization/DUTPacked/CoreDUT', 'BalanceDelays', 'inherit');hdlset_param('rmsNormalization/DUTPacked/DdrBeatUnpack', 'BalanceDelays', 'inherit');hdlset_param('rmsNormalization/DUTPacked/CfgBeatUnpack', 'BalanceDelays', 'inherit');">enable delay balancing for all subsystems</a>. See the documentation for recommended workflows on scoping delay balancing for DUT inputs and outputs and leveraging delay absorption to avoid introducing extra latency.<br /><br /><b>
+Subsystem: <a href="matlab:coder.internal.code2model('rmsNormalization:240')" name="code2model" class="code2model">
+rmsNormalization/DUTPacked/CfgBeatUnpack
+</a>
+
+</b>
+<br /><b>
+Subsystem: <a href="matlab:coder.internal.code2model('rmsNormalization:243')" name="code2model" class="code2model">
+rmsNormalization/DUTPacked/DdrBeatUnpack
+</a>
+
+</b>
+<br /><b>
+Subsystem: <a href="matlab:coder.internal.code2model('rmsNormalization:246')" name="code2model" class="code2model">
+rmsNormalization/DUTPacked/CoreDUT
+</a>
+
+</b>
+<br /><b>
+Subsystem: <a href="matlab:coder.internal.code2model('rmsNormalization:249')" name="code2model" class="code2model">
+rmsNormalization/DUTPacked/OutBeatPack
+</a>
+
+</b>
+<br /><b>
+Subsystem: <a href="matlab:coder.internal.code2model('rmsNormalization:260')" name="code2model" class="code2model">
+rmsNormalization/DUTPacked/CfgBeatUnpack/Unpack
+</a>
+
+</b>
+<br /><b>
+Subsystem: <a href="matlab:coder.internal.code2model('rmsNormalization:295')" name="code2model" class="code2model">
+rmsNormalization/DUTPacked/CoreDUT/Controller
+</a>
+
+</b>
+<br /><b>
+Subsystem: <a href="matlab:coder.internal.code2model('rmsNormalization:495')" name="code2model" class="code2model">
+rmsNormalization/DUTPacked/OutBeatPack/Pack
+</a>
+
+</b>
 <br /><br /><table width="100%" border="1">
 <tr style="background-color: #eeeeee">
 <th align="left" valign="top" style="border-style: none">
@@ -42,10 +84,10 @@ Phase Delay
 </tr>
 <tr style="background-color: #ffffff">
 <td align="left" valign="top" style="border-style: none">
-rmsNormalization/DUT/outBeat
+rmsNormalization/DUTPacked/outBeat
 </td>
 <td align="left" valign="top" style="border-style: none">
-189
+0
 </td>
 <td align="left" valign="top" style="border-style: none">
 0
@@ -54,10 +96,10 @@ rmsNormalization/DUT/outBeat
 </tr>
 <tr style="background-color: #eeeeff">
 <td align="left" valign="top" style="border-style: none">
-rmsNormalization/DUT/outValid
+rmsNormalization/DUTPacked/outValid
 </td>
 <td align="left" valign="top" style="border-style: none">
-189
+0
 </td>
 <td align="left" valign="top" style="border-style: none">
 0
@@ -66,10 +108,10 @@ rmsNormalization/DUT/outValid
 </tr>
 <tr style="background-color: #ffffff">
 <td align="left" valign="top" style="border-style: none">
-rmsNormalization/DUT/ddrReadAddr
+rmsNormalization/DUTPacked/ddrReadAddr
 </td>
 <td align="left" valign="top" style="border-style: none">
-189
+0
 </td>
 <td align="left" valign="top" style="border-style: none">
 0
@@ -78,10 +120,10 @@ rmsNormalization/DUT/ddrReadAddr
 </tr>
 <tr style="background-color: #eeeeff">
 <td align="left" valign="top" style="border-style: none">
-rmsNormalization/DUT/ddrReadEn
+rmsNormalization/DUTPacked/ddrReadEn
 </td>
 <td align="left" valign="top" style="border-style: none">
-189
+0
 </td>
 <td align="left" valign="top" style="border-style: none">
 0
@@ -90,10 +132,10 @@ rmsNormalization/DUT/ddrReadEn
 </tr>
 <tr style="background-color: #ffffff">
 <td align="left" valign="top" style="border-style: none">
-rmsNormalization/DUT/done
+rmsNormalization/DUTPacked/done
 </td>
 <td align="left" valign="top" style="border-style: none">
-189
+0
 </td>
 <td align="left" valign="top" style="border-style: none">
 0
@@ -102,10 +144,10 @@ rmsNormalization/DUT/done
 </tr>
 <tr style="background-color: #eeeeff">
 <td align="left" valign="top" style="border-style: none">
-rmsNormalization/DUT/busy
+rmsNormalization/DUTPacked/busy
 </td>
 <td align="left" valign="top" style="border-style: none">
-189
+0
 </td>
 <td align="left" valign="top" style="border-style: none">
 0
@@ -114,10 +156,10 @@ rmsNormalization/DUT/busy
 </tr>
 
 </table>
-<br /><br />Design delays may not be fully utilized to absorb latency introduced by optimizations and block implementations because there are blockers that inhibit delay absorption. Consider changing <a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'configset.internal.open(\'rmsNormalization\',\'PipelineDistributionPriority\')'})" > PipelineDistributionPriority</a> to 'Performance' to allow delay absorption across the blockers. Note that this can lead to validation model mismatches during the initialization cycles or whole simulation time if the model has feedback loops.<br /><br /><a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'run(\'/home/yang/Documents/prj/matlab_DL_transfromer/transformer_models_neo/work/hdl/simulink_rmsNormalization/rmsNormalization/highlightDelayAbsorption.m\')'})" >
+<br /><br />Design delays are fully utilized to absorb latency introduced by optimizations and block implementations.<br /><br /><a href="matlab:run('/home/yang/Documents/prj/matlab_DL_transfromer/transformer_models_neo/work/hdl/simulink_rmsNormalization/rmsNormalization/highlightDelayAbsorption.m')">
 Highlight delay absorption blockers and design delays excluded from absorption
 </a>
-<br /><a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'run(\'/home/yang/Documents/prj/matlab_DL_transfromer/transformer_models_neo/work/hdl/simulink_rmsNormalization/rmsNormalization/clearhighlighting.m\')'})" >
+<br /><a href="matlab:run('/home/yang/Documents/prj/matlab_DL_transfromer/transformer_models_neo/work/hdl/simulink_rmsNormalization/rmsNormalization/clearhighlighting.m')">
 Clear highlighting
 </a>
 <br /><br /><a name="Detailed Report">
@@ -130,7 +172,7 @@ Detailed Report
 
 </a>
 <br /><br /><h5>
-Report for Subsystem:    <a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:25\')'})"  name="code2model" class="code2model">
+Report for Subsystem:    <a href="matlab:coder.internal.code2model('rmsNormalization:286')" name="code2model" class="code2model">
 ScalarRsqrt
 </a>
 
@@ -159,7 +201,7 @@ Latency Introduced
 </tr>
 <tr style="background-color: #ffffff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:191\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:458')" name="code2model" class="code2model">
 Reciprocal
 </a>
 
@@ -174,7 +216,22 @@ Reciprocal
 </tr>
 <tr style="background-color: #eeeeff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:188\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:454')" name="code2model" class="code2model">
+RsqrtOperandAdd
+</a>
+
+</td>
+<td align="left" valign="top" style="border-style: none">
+1
+</td>
+<td align="left" valign="top" style="border-style: none">
+11
+</td>
+
+</tr>
+<tr style="background-color: #ffffff">
+<td align="left" valign="top" style="border-style: none">
+<a href="matlab:coder.internal.code2model('rmsNormalization:455')" name="code2model" class="code2model">
 Sqrt
 </a>
 
@@ -192,17 +249,17 @@ Sqrt
 <br />List of preserved delay blocks and delay absorption blockers:<table width="100%" border="1">
 <tr style="background-color: #eeeeff">
 <td align="left" valign="top" style="border-style: none">
-rmsNormalization/DUT/ScalarRsqrt/Reciprocal_ZeroProtectionPartition
+rmsNormalization/DUTPacked/CoreDUT/ScalarRsqrt/Reciprocal_ZeroProtectionPartition
 </td>
 <td align="left" valign="top" style="border-style: none">
-150 cycles of extra latency cannot be absorbed because of this blocker
+39 cycles of extra latency cannot be absorbed because of this blocker
 </td>
 
 </tr>
 
 </table>
 <br /><h5>
-Report for Subsystem:    <a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:16\')'})"  name="code2model" class="code2model">
+Report for Subsystem:    <a href="matlab:coder.internal.code2model('rmsNormalization:277')" name="code2model" class="code2model">
 SquareBeat
 </a>
 
@@ -231,7 +288,7 @@ Latency Introduced
 </tr>
 <tr style="background-color: #ffffff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:49\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:307')" name="code2model" class="code2model">
 Square
 </a>
 
@@ -247,7 +304,7 @@ Square
 
 </table>
 <br /><h5>
-Report for Subsystem:    <a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:32\')'})"  name="code2model" class="code2model">
+Report for Subsystem:    <a href="matlab:coder.internal.code2model('rmsNormalization:292')" name="code2model" class="code2model">
 LaneMultiply
 </a>
 
@@ -276,7 +333,7 @@ Latency Introduced
 </tr>
 <tr style="background-color: #ffffff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:204\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:487')" name="code2model" class="code2model">
 ScaleMultiply
 </a>
 
@@ -291,7 +348,7 @@ ScaleMultiply
 </tr>
 <tr style="background-color: #eeeeff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:203\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:486')" name="code2model" class="code2model">
 WeightMultiply
 </a>
 
@@ -306,7 +363,7 @@ WeightMultiply
 </tr>
 <tr style="background-color: #ffffff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:202\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:485')" name="code2model" class="code2model">
 ScaleGamma
 </a>
 
@@ -322,7 +379,7 @@ ScaleGamma
 
 </table>
 <br /><h5>
-Report for Subsystem:    <a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:19\')'})"  name="code2model" class="code2model">
+Report for Subsystem:    <a href="matlab:coder.internal.code2model('rmsNormalization:280')" name="code2model" class="code2model">
 BeatReduce
 </a>
 
@@ -351,7 +408,7 @@ Latency Introduced
 </tr>
 <tr style="background-color: #ffffff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:53\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:313')" name="code2model" class="code2model">
 Add01
 </a>
 
@@ -366,7 +423,7 @@ Add01
 </tr>
 <tr style="background-color: #eeeeff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:57\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:317')" name="code2model" class="code2model">
 Add0123
 </a>
 
@@ -381,7 +438,7 @@ Add0123
 </tr>
 <tr style="background-color: #ffffff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:54\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:314')" name="code2model" class="code2model">
 Add23
 </a>
 
@@ -396,7 +453,7 @@ Add23
 </tr>
 <tr style="background-color: #eeeeff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:55\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:315')" name="code2model" class="code2model">
 Add45
 </a>
 
@@ -411,7 +468,7 @@ Add45
 </tr>
 <tr style="background-color: #ffffff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:58\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:318')" name="code2model" class="code2model">
 Add4567
 </a>
 
@@ -426,7 +483,7 @@ Add4567
 </tr>
 <tr style="background-color: #eeeeff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:56\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:316')" name="code2model" class="code2model">
 Add67
 </a>
 
@@ -441,7 +498,7 @@ Add67
 </tr>
 <tr style="background-color: #ffffff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:59\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:319')" name="code2model" class="code2model">
 AddAll
 </a>
 
@@ -457,7 +514,7 @@ AddAll
 
 </table>
 <br /><h5>
-Report for Subsystem:    <a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:22\')'})"  name="code2model" class="code2model">
+Report for Subsystem:    <a href="matlab:coder.internal.code2model('rmsNormalization:283')" name="code2model" class="code2model">
 BeatAccumulator
 </a>
 
@@ -486,7 +543,7 @@ Latency Introduced
 </tr>
 <tr style="background-color: #ffffff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:64\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:326')" name="code2model" class="code2model">
 BeatSumSingle
 </a>
 
@@ -501,7 +558,7 @@ BeatSumSingle
 </tr>
 <tr style="background-color: #eeeeff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:88\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:351')" name="code2model" class="code2model">
 UpdateEn01
 </a>
 
@@ -516,7 +573,7 @@ UpdateEn01
 </tr>
 <tr style="background-color: #ffffff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:106\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:369')" name="code2model" class="code2model">
 UpdateEn03
 </a>
 
@@ -531,7 +588,7 @@ UpdateEn03
 </tr>
 <tr style="background-color: #eeeeff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:124\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:387')" name="code2model" class="code2model">
 UpdateEn05
 </a>
 
@@ -546,7 +603,7 @@ UpdateEn05
 </tr>
 <tr style="background-color: #ffffff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:142\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:405')" name="code2model" class="code2model">
 UpdateEn07
 </a>
 
@@ -561,7 +618,7 @@ UpdateEn07
 </tr>
 <tr style="background-color: #eeeeff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:80\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:343')" name="code2model" class="code2model">
 Gate00
 </a>
 
@@ -576,7 +633,7 @@ Gate00
 </tr>
 <tr style="background-color: #ffffff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:89\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:352')" name="code2model" class="code2model">
 Gate01
 </a>
 
@@ -591,7 +648,7 @@ Gate01
 </tr>
 <tr style="background-color: #eeeeff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:98\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:361')" name="code2model" class="code2model">
 Gate02
 </a>
 
@@ -606,7 +663,7 @@ Gate02
 </tr>
 <tr style="background-color: #ffffff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:107\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:370')" name="code2model" class="code2model">
 Gate03
 </a>
 
@@ -621,7 +678,7 @@ Gate03
 </tr>
 <tr style="background-color: #eeeeff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:116\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:379')" name="code2model" class="code2model">
 Gate04
 </a>
 
@@ -636,7 +693,7 @@ Gate04
 </tr>
 <tr style="background-color: #ffffff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:125\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:388')" name="code2model" class="code2model">
 Gate05
 </a>
 
@@ -651,7 +708,7 @@ Gate05
 </tr>
 <tr style="background-color: #eeeeff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:134\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:397')" name="code2model" class="code2model">
 Gate06
 </a>
 
@@ -666,7 +723,7 @@ Gate06
 </tr>
 <tr style="background-color: #ffffff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:143\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:406')" name="code2model" class="code2model">
 Gate07
 </a>
 
@@ -681,7 +738,7 @@ Gate07
 </tr>
 <tr style="background-color: #eeeeff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:152\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:415')" name="code2model" class="code2model">
 Gate08
 </a>
 
@@ -696,7 +753,7 @@ Gate08
 </tr>
 <tr style="background-color: #ffffff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:161\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:424')" name="code2model" class="code2model">
 Gate09
 </a>
 
@@ -711,7 +768,7 @@ Gate09
 </tr>
 <tr style="background-color: #eeeeff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:170\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:433')" name="code2model" class="code2model">
 Gate10
 </a>
 
@@ -726,7 +783,7 @@ Gate10
 </tr>
 <tr style="background-color: #ffffff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:176\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:439')" name="code2model" class="code2model">
 Sum01
 </a>
 
@@ -741,7 +798,7 @@ Sum01
 </tr>
 <tr style="background-color: #eeeeff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:181\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:444')" name="code2model" class="code2model">
 Sum0123
 </a>
 
@@ -756,7 +813,7 @@ Sum0123
 </tr>
 <tr style="background-color: #ffffff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:184\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:447')" name="code2model" class="code2model">
 Sum01234567
 </a>
 
@@ -771,7 +828,7 @@ Sum01234567
 </tr>
 <tr style="background-color: #eeeeff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:177\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:440')" name="code2model" class="code2model">
 Sum23
 </a>
 
@@ -786,7 +843,7 @@ Sum23
 </tr>
 <tr style="background-color: #ffffff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:178\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:441')" name="code2model" class="code2model">
 Sum45
 </a>
 
@@ -801,7 +858,7 @@ Sum45
 </tr>
 <tr style="background-color: #eeeeff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:182\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:445')" name="code2model" class="code2model">
 Sum4567
 </a>
 
@@ -816,7 +873,7 @@ Sum4567
 </tr>
 <tr style="background-color: #ffffff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:179\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:442')" name="code2model" class="code2model">
 Sum67
 </a>
 
@@ -831,7 +888,7 @@ Sum67
 </tr>
 <tr style="background-color: #eeeeff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:180\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:443')" name="code2model" class="code2model">
 Sum89
 </a>
 
@@ -846,7 +903,7 @@ Sum89
 </tr>
 <tr style="background-color: #ffffff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:183\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:446')" name="code2model" class="code2model">
 Sum8910
 </a>
 
@@ -861,7 +918,7 @@ Sum8910
 </tr>
 <tr style="background-color: #eeeeff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:185\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:448')" name="code2model" class="code2model">
 SumAll
 </a>
 
@@ -876,7 +933,7 @@ SumAll
 </tr>
 <tr style="background-color: #ffffff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:81\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:344')" name="code2model" class="code2model">
 AccumulateAdd00
 </a>
 
@@ -891,7 +948,7 @@ AccumulateAdd00
 </tr>
 <tr style="background-color: #eeeeff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:90\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:353')" name="code2model" class="code2model">
 AccumulateAdd01
 </a>
 
@@ -906,7 +963,7 @@ AccumulateAdd01
 </tr>
 <tr style="background-color: #ffffff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:99\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:362')" name="code2model" class="code2model">
 AccumulateAdd02
 </a>
 
@@ -921,7 +978,7 @@ AccumulateAdd02
 </tr>
 <tr style="background-color: #eeeeff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:108\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:371')" name="code2model" class="code2model">
 AccumulateAdd03
 </a>
 
@@ -936,7 +993,7 @@ AccumulateAdd03
 </tr>
 <tr style="background-color: #ffffff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:117\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:380')" name="code2model" class="code2model">
 AccumulateAdd04
 </a>
 
@@ -951,7 +1008,7 @@ AccumulateAdd04
 </tr>
 <tr style="background-color: #eeeeff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:126\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:389')" name="code2model" class="code2model">
 AccumulateAdd05
 </a>
 
@@ -966,7 +1023,7 @@ AccumulateAdd05
 </tr>
 <tr style="background-color: #ffffff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:135\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:398')" name="code2model" class="code2model">
 AccumulateAdd06
 </a>
 
@@ -981,7 +1038,7 @@ AccumulateAdd06
 </tr>
 <tr style="background-color: #eeeeff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:144\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:407')" name="code2model" class="code2model">
 AccumulateAdd07
 </a>
 
@@ -996,7 +1053,7 @@ AccumulateAdd07
 </tr>
 <tr style="background-color: #ffffff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:153\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:416')" name="code2model" class="code2model">
 AccumulateAdd08
 </a>
 
@@ -1011,7 +1068,7 @@ AccumulateAdd08
 </tr>
 <tr style="background-color: #eeeeff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:162\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:425')" name="code2model" class="code2model">
 AccumulateAdd09
 </a>
 
@@ -1026,7 +1083,7 @@ AccumulateAdd09
 </tr>
 <tr style="background-color: #ffffff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:171\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:434')" name="code2model" class="code2model">
 AccumulateAdd10
 </a>
 
@@ -1041,22 +1098,7 @@ AccumulateAdd10
 </tr>
 <tr style="background-color: #eeeeff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:138\')'})"  name="code2model" class="code2model">
-FeedbackDelay06_absorbed
-</a>
-
-</td>
-<td align="left" valign="top" style="border-style: none">
-1
-</td>
-<td align="left" valign="top" style="border-style: none">
-8
-</td>
-
-</tr>
-<tr style="background-color: #ffffff">
-<td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:120\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:383')" name="code2model" class="code2model">
 FeedbackDelay04_absorbed
 </a>
 
@@ -1069,10 +1111,25 @@ FeedbackDelay04_absorbed
 </td>
 
 </tr>
+<tr style="background-color: #ffffff">
+<td align="left" valign="top" style="border-style: none">
+<a href="matlab:coder.internal.code2model('rmsNormalization:365')" name="code2model" class="code2model">
+FeedbackDelay02_absorbed
+</a>
+
+</td>
+<td align="left" valign="top" style="border-style: none">
+1
+</td>
+<td align="left" valign="top" style="border-style: none">
+8
+</td>
+
+</tr>
 <tr style="background-color: #eeeeff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:102\')'})"  name="code2model" class="code2model">
-FeedbackDelay02_absorbed
+<a href="matlab:coder.internal.code2model('rmsNormalization:347')" name="code2model" class="code2model">
+FeedbackDelay00_absorbed
 </a>
 
 </td>
@@ -1086,8 +1143,8 @@ FeedbackDelay02_absorbed
 </tr>
 <tr style="background-color: #ffffff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:156\')'})"  name="code2model" class="code2model">
-FeedbackDelay08_absorbed
+<a href="matlab:coder.internal.code2model('rmsNormalization:401')" name="code2model" class="code2model">
+FeedbackDelay06_absorbed
 </a>
 
 </td>
@@ -1101,8 +1158,8 @@ FeedbackDelay08_absorbed
 </tr>
 <tr style="background-color: #eeeeff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:84\')'})"  name="code2model" class="code2model">
-FeedbackDelay00_absorbed
+<a href="matlab:coder.internal.code2model('rmsNormalization:419')" name="code2model" class="code2model">
+FeedbackDelay08_absorbed
 </a>
 
 </td>
@@ -1152,8 +1209,8 @@ Unabsorbed Latency (total/non-absorbable)
 </tr>
 <tr style="background-color: #ffffff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:138\')'})"  name="code2model" class="code2model">
-FeedbackDelay06_absorbed
+<a href="matlab:coder.internal.code2model('rmsNormalization:437')" name="code2model" class="code2model">
+FeedbackDelay10_absorbed
 </a>
 
 </td>
@@ -1173,343 +1230,7 @@ FeedbackDelay06_absorbed
 </tr>
 <tr style="background-color: #eeeeff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:112\')'})"  name="code2model" class="code2model">
-BankState03_absorbed
-</a>
-
-</td>
-<td align="left" valign="top" style="border-style: none">
-1
-</td>
-<td align="left" valign="top" style="border-style: none">
-1
-</td>
-<td align="left" valign="top" style="border-style: none">
-0
-</td>
-<td align="left" valign="top" style="border-style: none">
-10/0
-</td>
-
-</tr>
-<tr style="background-color: #ffffff">
-<td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:157\')'})"  name="code2model" class="code2model">
-BankState08_absorbed
-</a>
-
-</td>
-<td align="left" valign="top" style="border-style: none">
-1
-</td>
-<td align="left" valign="top" style="border-style: none">
-1
-</td>
-<td align="left" valign="top" style="border-style: none">
-0
-</td>
-<td align="left" valign="top" style="border-style: none">
-10/0
-</td>
-
-</tr>
-<tr style="background-color: #eeeeff">
-<td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:121\')'})"  name="code2model" class="code2model">
-BankState04_absorbed
-</a>
-
-</td>
-<td align="left" valign="top" style="border-style: none">
-1
-</td>
-<td align="left" valign="top" style="border-style: none">
-1
-</td>
-<td align="left" valign="top" style="border-style: none">
-0
-</td>
-<td align="left" valign="top" style="border-style: none">
-10/0
-</td>
-
-</tr>
-<tr style="background-color: #ffffff">
-<td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:120\')'})"  name="code2model" class="code2model">
-FeedbackDelay04_absorbed
-</a>
-
-</td>
-<td align="left" valign="top" style="border-style: none">
-1
-</td>
-<td align="left" valign="top" style="border-style: none">
-10
-</td>
-<td align="left" valign="top" style="border-style: none">
-0
-</td>
-<td align="left" valign="top" style="border-style: none">
-0/0
-</td>
-
-</tr>
-<tr style="background-color: #eeeeff">
-<td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:102\')'})"  name="code2model" class="code2model">
-FeedbackDelay02_absorbed
-</a>
-
-</td>
-<td align="left" valign="top" style="border-style: none">
-1
-</td>
-<td align="left" valign="top" style="border-style: none">
-10
-</td>
-<td align="left" valign="top" style="border-style: none">
-0
-</td>
-<td align="left" valign="top" style="border-style: none">
-0/0
-</td>
-
-</tr>
-<tr style="background-color: #ffffff">
-<td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:103\')'})"  name="code2model" class="code2model">
-BankState02_absorbed
-</a>
-
-</td>
-<td align="left" valign="top" style="border-style: none">
-1
-</td>
-<td align="left" valign="top" style="border-style: none">
-1
-</td>
-<td align="left" valign="top" style="border-style: none">
-0
-</td>
-<td align="left" valign="top" style="border-style: none">
-10/0
-</td>
-
-</tr>
-<tr style="background-color: #eeeeff">
-<td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:165\')'})"  name="code2model" class="code2model">
-FeedbackDelay09_absorbed
-</a>
-
-</td>
-<td align="left" valign="top" style="border-style: none">
-1
-</td>
-<td align="left" valign="top" style="border-style: none">
-10
-</td>
-<td align="left" valign="top" style="border-style: none">
-0
-</td>
-<td align="left" valign="top" style="border-style: none">
-0/0
-</td>
-
-</tr>
-<tr style="background-color: #ffffff">
-<td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:156\')'})"  name="code2model" class="code2model">
-FeedbackDelay08_absorbed
-</a>
-
-</td>
-<td align="left" valign="top" style="border-style: none">
-1
-</td>
-<td align="left" valign="top" style="border-style: none">
-10
-</td>
-<td align="left" valign="top" style="border-style: none">
-0
-</td>
-<td align="left" valign="top" style="border-style: none">
-0/0
-</td>
-
-</tr>
-<tr style="background-color: #eeeeff">
-<td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:84\')'})"  name="code2model" class="code2model">
-FeedbackDelay00_absorbed
-</a>
-
-</td>
-<td align="left" valign="top" style="border-style: none">
-1
-</td>
-<td align="left" valign="top" style="border-style: none">
-10
-</td>
-<td align="left" valign="top" style="border-style: none">
-0
-</td>
-<td align="left" valign="top" style="border-style: none">
-0/0
-</td>
-
-</tr>
-<tr style="background-color: #ffffff">
-<td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:139\')'})"  name="code2model" class="code2model">
-BankState06_absorbed
-</a>
-
-</td>
-<td align="left" valign="top" style="border-style: none">
-1
-</td>
-<td align="left" valign="top" style="border-style: none">
-1
-</td>
-<td align="left" valign="top" style="border-style: none">
-0
-</td>
-<td align="left" valign="top" style="border-style: none">
-10/0
-</td>
-
-</tr>
-<tr style="background-color: #eeeeff">
-<td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:147\')'})"  name="code2model" class="code2model">
-FeedbackDelay07_absorbed
-</a>
-
-</td>
-<td align="left" valign="top" style="border-style: none">
-1
-</td>
-<td align="left" valign="top" style="border-style: none">
-10
-</td>
-<td align="left" valign="top" style="border-style: none">
-0
-</td>
-<td align="left" valign="top" style="border-style: none">
-0/0
-</td>
-
-</tr>
-<tr style="background-color: #ffffff">
-<td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:85\')'})"  name="code2model" class="code2model">
-BankState00_absorbed
-</a>
-
-</td>
-<td align="left" valign="top" style="border-style: none">
-1
-</td>
-<td align="left" valign="top" style="border-style: none">
-1
-</td>
-<td align="left" valign="top" style="border-style: none">
-0
-</td>
-<td align="left" valign="top" style="border-style: none">
-10/0
-</td>
-
-</tr>
-<tr style="background-color: #eeeeff">
-<td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:94\')'})"  name="code2model" class="code2model">
-BankState01_absorbed
-</a>
-
-</td>
-<td align="left" valign="top" style="border-style: none">
-1
-</td>
-<td align="left" valign="top" style="border-style: none">
-1
-</td>
-<td align="left" valign="top" style="border-style: none">
-0
-</td>
-<td align="left" valign="top" style="border-style: none">
-10/0
-</td>
-
-</tr>
-<tr style="background-color: #ffffff">
-<td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:166\')'})"  name="code2model" class="code2model">
-BankState09_absorbed
-</a>
-
-</td>
-<td align="left" valign="top" style="border-style: none">
-1
-</td>
-<td align="left" valign="top" style="border-style: none">
-1
-</td>
-<td align="left" valign="top" style="border-style: none">
-0
-</td>
-<td align="left" valign="top" style="border-style: none">
-10/0
-</td>
-
-</tr>
-<tr style="background-color: #eeeeff">
-<td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:130\')'})"  name="code2model" class="code2model">
-BankState05_absorbed
-</a>
-
-</td>
-<td align="left" valign="top" style="border-style: none">
-1
-</td>
-<td align="left" valign="top" style="border-style: none">
-1
-</td>
-<td align="left" valign="top" style="border-style: none">
-0
-</td>
-<td align="left" valign="top" style="border-style: none">
-10/0
-</td>
-
-</tr>
-<tr style="background-color: #ffffff">
-<td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:93\')'})"  name="code2model" class="code2model">
-FeedbackDelay01_absorbed
-</a>
-
-</td>
-<td align="left" valign="top" style="border-style: none">
-1
-</td>
-<td align="left" valign="top" style="border-style: none">
-10
-</td>
-<td align="left" valign="top" style="border-style: none">
-0
-</td>
-<td align="left" valign="top" style="border-style: none">
-0/0
-</td>
-
-</tr>
-<tr style="background-color: #eeeeff">
-<td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:175\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:438')" name="code2model" class="code2model">
 BankState10_absorbed
 </a>
 
@@ -1530,49 +1251,7 @@ BankState10_absorbed
 </tr>
 <tr style="background-color: #ffffff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:111\')'})"  name="code2model" class="code2model">
-FeedbackDelay03_absorbed
-</a>
-
-</td>
-<td align="left" valign="top" style="border-style: none">
-1
-</td>
-<td align="left" valign="top" style="border-style: none">
-10
-</td>
-<td align="left" valign="top" style="border-style: none">
-0
-</td>
-<td align="left" valign="top" style="border-style: none">
-0/0
-</td>
-
-</tr>
-<tr style="background-color: #eeeeff">
-<td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:174\')'})"  name="code2model" class="code2model">
-FeedbackDelay10_absorbed
-</a>
-
-</td>
-<td align="left" valign="top" style="border-style: none">
-1
-</td>
-<td align="left" valign="top" style="border-style: none">
-10
-</td>
-<td align="left" valign="top" style="border-style: none">
-0
-</td>
-<td align="left" valign="top" style="border-style: none">
-0/0
-</td>
-
-</tr>
-<tr style="background-color: #ffffff">
-<td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:148\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:411')" name="code2model" class="code2model">
 BankState07_absorbed
 </a>
 
@@ -1593,7 +1272,133 @@ BankState07_absorbed
 </tr>
 <tr style="background-color: #eeeeff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:129\')'})"  name="code2model" class="code2model">
+<a href="matlab:coder.internal.code2model('rmsNormalization:402')" name="code2model" class="code2model">
+BankState06_absorbed
+</a>
+
+</td>
+<td align="left" valign="top" style="border-style: none">
+1
+</td>
+<td align="left" valign="top" style="border-style: none">
+1
+</td>
+<td align="left" valign="top" style="border-style: none">
+0
+</td>
+<td align="left" valign="top" style="border-style: none">
+10/0
+</td>
+
+</tr>
+<tr style="background-color: #ffffff">
+<td align="left" valign="top" style="border-style: none">
+<a href="matlab:coder.internal.code2model('rmsNormalization:383')" name="code2model" class="code2model">
+FeedbackDelay04_absorbed
+</a>
+
+</td>
+<td align="left" valign="top" style="border-style: none">
+1
+</td>
+<td align="left" valign="top" style="border-style: none">
+10
+</td>
+<td align="left" valign="top" style="border-style: none">
+0
+</td>
+<td align="left" valign="top" style="border-style: none">
+0/0
+</td>
+
+</tr>
+<tr style="background-color: #eeeeff">
+<td align="left" valign="top" style="border-style: none">
+<a href="matlab:coder.internal.code2model('rmsNormalization:365')" name="code2model" class="code2model">
+FeedbackDelay02_absorbed
+</a>
+
+</td>
+<td align="left" valign="top" style="border-style: none">
+1
+</td>
+<td align="left" valign="top" style="border-style: none">
+10
+</td>
+<td align="left" valign="top" style="border-style: none">
+0
+</td>
+<td align="left" valign="top" style="border-style: none">
+0/0
+</td>
+
+</tr>
+<tr style="background-color: #ffffff">
+<td align="left" valign="top" style="border-style: none">
+<a href="matlab:coder.internal.code2model('rmsNormalization:366')" name="code2model" class="code2model">
+BankState02_absorbed
+</a>
+
+</td>
+<td align="left" valign="top" style="border-style: none">
+1
+</td>
+<td align="left" valign="top" style="border-style: none">
+1
+</td>
+<td align="left" valign="top" style="border-style: none">
+0
+</td>
+<td align="left" valign="top" style="border-style: none">
+10/0
+</td>
+
+</tr>
+<tr style="background-color: #eeeeff">
+<td align="left" valign="top" style="border-style: none">
+<a href="matlab:coder.internal.code2model('rmsNormalization:348')" name="code2model" class="code2model">
+BankState00_absorbed
+</a>
+
+</td>
+<td align="left" valign="top" style="border-style: none">
+1
+</td>
+<td align="left" valign="top" style="border-style: none">
+1
+</td>
+<td align="left" valign="top" style="border-style: none">
+0
+</td>
+<td align="left" valign="top" style="border-style: none">
+10/0
+</td>
+
+</tr>
+<tr style="background-color: #ffffff">
+<td align="left" valign="top" style="border-style: none">
+<a href="matlab:coder.internal.code2model('rmsNormalization:347')" name="code2model" class="code2model">
+FeedbackDelay00_absorbed
+</a>
+
+</td>
+<td align="left" valign="top" style="border-style: none">
+1
+</td>
+<td align="left" valign="top" style="border-style: none">
+10
+</td>
+<td align="left" valign="top" style="border-style: none">
+0
+</td>
+<td align="left" valign="top" style="border-style: none">
+0/0
+</td>
+
+</tr>
+<tr style="background-color: #eeeeff">
+<td align="left" valign="top" style="border-style: none">
+<a href="matlab:coder.internal.code2model('rmsNormalization:392')" name="code2model" class="code2model">
 FeedbackDelay05_absorbed
 </a>
 
@@ -1612,40 +1417,10 @@ FeedbackDelay05_absorbed
 </td>
 
 </tr>
-
-</table>
-<br /><h5>
-Report for Subsystem:    <a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:7\')'})"  name="code2model" class="code2model">
-DUT
-</a>
-
-</h5>
-List of blocks that introduced latency:<table width="100%" border="1">
-<tr style="background-color: #eeeeee">
-<th align="left" valign="top" style="border-style: none">
-<b>
-Block
-</b>
-
-</th>
-<th align="left" valign="top" style="border-style: none">
-<b>
-Sample Time
-</b>
-
-</th>
-<th align="left" valign="top" style="border-style: none">
-<b>
-Latency Introduced
-</b>
-
-</th>
-
-</tr>
 <tr style="background-color: #ffffff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:35\')'})"  name="code2model" class="code2model">
-Controller
+<a href="matlab:coder.internal.code2model('rmsNormalization:401')" name="code2model" class="code2model">
+FeedbackDelay06_absorbed
 </a>
 
 </td>
@@ -1653,50 +1428,41 @@ Controller
 1
 </td>
 <td align="left" valign="top" style="border-style: none">
-81
+10
+</td>
+<td align="left" valign="top" style="border-style: none">
+0
+</td>
+<td align="left" valign="top" style="border-style: none">
+0/0
 </td>
 
 </tr>
+<tr style="background-color: #eeeeff">
+<td align="left" valign="top" style="border-style: none">
+<a href="matlab:coder.internal.code2model('rmsNormalization:419')" name="code2model" class="code2model">
+FeedbackDelay08_absorbed
+</a>
 
-</table>
-<br />List of delay blocks that absorbed latency. To exclude specific delay block from being used for absorption, turn off block property 'AllowDelayDistribution':<table width="100%" border="1">
-<tr style="background-color: #eeeeee">
-<th align="left" valign="top" style="border-style: none">
-<b>
-Delay Block
-</b>
-
-</th>
-<th align="left" valign="top" style="border-style: none">
-<b>
-Sample Time
-</b>
-
-</th>
-<th align="left" valign="top" style="border-style: none">
-<b>
-Latency Absorbed
-</b>
-
-</th>
-<th align="left" valign="top" style="border-style: none">
-<b>
-Remaining Delays
-</b>
-
-</th>
-<th align="left" valign="top" style="border-style: none">
-<b>
-Unabsorbed Latency (total/non-absorbable)
-</b>
-
-</th>
+</td>
+<td align="left" valign="top" style="border-style: none">
+1
+</td>
+<td align="left" valign="top" style="border-style: none">
+10
+</td>
+<td align="left" valign="top" style="border-style: none">
+0
+</td>
+<td align="left" valign="top" style="border-style: none">
+0/0
+</td>
 
 </tr>
 <tr style="background-color: #ffffff">
 <td align="left" valign="top" style="border-style: none">
-<a href="javascript: void(0)" onclick="postParentWindowMessage({message:'legacyMCall', expr:'coder.internal.code2model(\'rmsNormalization:28\')'})"  name="code2model" class="code2model">
-InvRmsDelay_absorbed
+<a href="matlab:coder.internal.code2model('rmsNormalization:429')" name="code2model" class="code2model">
+BankState09_absorbed
 </a>
 
 </td>
@@ -1710,14 +1476,202 @@ InvRmsDelay_absorbed
 0
 </td>
 <td align="left" valign="top" style="border-style: none">
-181/150
+10/0
+</td>
+
+</tr>
+<tr style="background-color: #eeeeff">
+<td align="left" valign="top" style="border-style: none">
+<a href="matlab:coder.internal.code2model('rmsNormalization:428')" name="code2model" class="code2model">
+FeedbackDelay09_absorbed
+</a>
+
+</td>
+<td align="left" valign="top" style="border-style: none">
+1
+</td>
+<td align="left" valign="top" style="border-style: none">
+10
+</td>
+<td align="left" valign="top" style="border-style: none">
+0
+</td>
+<td align="left" valign="top" style="border-style: none">
+0/0
+</td>
+
+</tr>
+<tr style="background-color: #ffffff">
+<td align="left" valign="top" style="border-style: none">
+<a href="matlab:coder.internal.code2model('rmsNormalization:410')" name="code2model" class="code2model">
+FeedbackDelay07_absorbed
+</a>
+
+</td>
+<td align="left" valign="top" style="border-style: none">
+1
+</td>
+<td align="left" valign="top" style="border-style: none">
+10
+</td>
+<td align="left" valign="top" style="border-style: none">
+0
+</td>
+<td align="left" valign="top" style="border-style: none">
+0/0
+</td>
+
+</tr>
+<tr style="background-color: #eeeeff">
+<td align="left" valign="top" style="border-style: none">
+<a href="matlab:coder.internal.code2model('rmsNormalization:357')" name="code2model" class="code2model">
+BankState01_absorbed
+</a>
+
+</td>
+<td align="left" valign="top" style="border-style: none">
+1
+</td>
+<td align="left" valign="top" style="border-style: none">
+1
+</td>
+<td align="left" valign="top" style="border-style: none">
+0
+</td>
+<td align="left" valign="top" style="border-style: none">
+10/0
+</td>
+
+</tr>
+<tr style="background-color: #ffffff">
+<td align="left" valign="top" style="border-style: none">
+<a href="matlab:coder.internal.code2model('rmsNormalization:356')" name="code2model" class="code2model">
+FeedbackDelay01_absorbed
+</a>
+
+</td>
+<td align="left" valign="top" style="border-style: none">
+1
+</td>
+<td align="left" valign="top" style="border-style: none">
+10
+</td>
+<td align="left" valign="top" style="border-style: none">
+0
+</td>
+<td align="left" valign="top" style="border-style: none">
+0/0
+</td>
+
+</tr>
+<tr style="background-color: #eeeeff">
+<td align="left" valign="top" style="border-style: none">
+<a href="matlab:coder.internal.code2model('rmsNormalization:420')" name="code2model" class="code2model">
+BankState08_absorbed
+</a>
+
+</td>
+<td align="left" valign="top" style="border-style: none">
+1
+</td>
+<td align="left" valign="top" style="border-style: none">
+1
+</td>
+<td align="left" valign="top" style="border-style: none">
+0
+</td>
+<td align="left" valign="top" style="border-style: none">
+10/0
+</td>
+
+</tr>
+<tr style="background-color: #ffffff">
+<td align="left" valign="top" style="border-style: none">
+<a href="matlab:coder.internal.code2model('rmsNormalization:375')" name="code2model" class="code2model">
+BankState03_absorbed
+</a>
+
+</td>
+<td align="left" valign="top" style="border-style: none">
+1
+</td>
+<td align="left" valign="top" style="border-style: none">
+1
+</td>
+<td align="left" valign="top" style="border-style: none">
+0
+</td>
+<td align="left" valign="top" style="border-style: none">
+10/0
+</td>
+
+</tr>
+<tr style="background-color: #eeeeff">
+<td align="left" valign="top" style="border-style: none">
+<a href="matlab:coder.internal.code2model('rmsNormalization:374')" name="code2model" class="code2model">
+FeedbackDelay03_absorbed
+</a>
+
+</td>
+<td align="left" valign="top" style="border-style: none">
+1
+</td>
+<td align="left" valign="top" style="border-style: none">
+10
+</td>
+<td align="left" valign="top" style="border-style: none">
+0
+</td>
+<td align="left" valign="top" style="border-style: none">
+0/0
+</td>
+
+</tr>
+<tr style="background-color: #ffffff">
+<td align="left" valign="top" style="border-style: none">
+<a href="matlab:coder.internal.code2model('rmsNormalization:384')" name="code2model" class="code2model">
+BankState04_absorbed
+</a>
+
+</td>
+<td align="left" valign="top" style="border-style: none">
+1
+</td>
+<td align="left" valign="top" style="border-style: none">
+1
+</td>
+<td align="left" valign="top" style="border-style: none">
+0
+</td>
+<td align="left" valign="top" style="border-style: none">
+10/0
+</td>
+
+</tr>
+<tr style="background-color: #eeeeff">
+<td align="left" valign="top" style="border-style: none">
+<a href="matlab:coder.internal.code2model('rmsNormalization:393')" name="code2model" class="code2model">
+BankState05_absorbed
+</a>
+
+</td>
+<td align="left" valign="top" style="border-style: none">
+1
+</td>
+<td align="left" valign="top" style="border-style: none">
+1
+</td>
+<td align="left" valign="top" style="border-style: none">
+0
+</td>
+<td align="left" valign="top" style="border-style: none">
+10/0
 </td>
 
 </tr>
 
 </table>
 <br /><br /><br /><br />
-<script>function postParentWindowMessage(message) {window.parent.postMessage(message, "*");}</script>
 </body>
 
 </html>

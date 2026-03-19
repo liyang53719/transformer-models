@@ -599,3 +599,135 @@ HDL Coder 报错往往是连锁的。常见误区是看到 10 条错误就试图
 4. 需要从 Simulink 走到外部 RTL 仿真的场景
 
 对于纯定点、纯组合、无状态的小模块，其中一些约束可以放宽；但对于 transformer 类流式算子，这些经验基本都是真正踩坑换来的。
+
+
+## 17. RTL v2 近期经验教训
+
+当前版本可以视为 `RTL v2`。这一版最重要的变化，不是又加了多少 Delay，而是把 `valid` 语义真正收敛成了可以读、可以查、可以在波形里定位的问题边界。
+
+### 17.1 每个参与计算的数据口都应该显式绑定 valid
+
+本轮回头看波形时，最明显的问题不是数据值本身，而是很多数据虽然在动，但没有清晰的“这拍是否有效”的标记。
+
+因此 v2 明确采用下面的约束：
+
+1. 任何参与计算的数据输入都尽量配对自己的 `valid`。
+2. 任何进入下一级继续参与计算的数据输出也尽量配对自己的 `valid`。
+3. `valid` 的命名尽量直接绑定到数据名，而不是泛化成难以判断来源的 `outValid`。
+
+这条规则在当前结构里体现为：
+
+1. `SquareBeat`: `ddrDataBeat -> ddrDataBeatValid`，`squaredBeat -> squaredBeatValid`
+2. `BeatReduce`: `squaredBeat -> squaredBeatValid`，`beatSum -> beatSumValid`
+3. `BeatAccumulator`: `beatSum -> beatSumValid`，`currentSum -> currentSumValid`
+4. `ScalarRsqrt`: `currentSum -> currentSumValid`，`invRms -> invRmsValid`
+5. `InvRmsLatch`: `invRmsIn -> invRmsInValid`，`invRmsLatched -> invRmsLatchedValid`
+6. `LaneMultiply`: `xBeat -> xBeatValid`，`gBeat -> gBeatValid`，`invRms -> invRmsValid`，`yBeat -> yBeatValid`
+
+这样做的直接收益是：
+
+1. 波形里一眼就能知道“数据静止”是因为无效，还是因为真的数值不变。
+2. 子模块之间的边界更稳定，后续重构不会总是靠猜时序。
+3. testbench 或外部断言更容易围绕 `valid` 搭起来。
+
+### 17.2 顶层 `CoreDUT` 应尽量只做连线，不做拼补式时序修复
+
+本轮另一个重要教训是：
+
+1. 如果某一级需要为自身输出做打拍或对齐，优先把动作收进该子模块。
+2. 如果某一级输出一个 `clear` / `capture` / `latchedValid` 之类的控制结果，也优先由拥有该状态的子模块输出。
+3. `CoreDUT` 更适合做结构装配，而不是临时摆放一串 `Unit Delay` 和逻辑门把系统“缝起来”。
+
+原因是：
+
+1. 顶层外置时序补丁会让 RTL 阅读者无法快速判断责任边界。
+2. 当模块被复用或再次细分时，这些顶层补丁通常会重新失配。
+3. 波形调试时，`CoreDUT` 一旦掺入大量对齐逻辑，就很难分辨哪里是架构行为，哪里只是修补行为。
+
+v2 的处理方向是：
+
+1. `InvRmsLatch` 内部负责 `capture accepted`、latched data、latched valid、以及 `clearAccumulator` 脉冲。
+2. `LaneMultiply` 内部负责把 `xBeatValid/gBeatValid/invRmsValid` 合并成 `yBeatValid`。
+3. `CoreDUT` 顶层只保留算术链和控制链的直连。
+
+### 17.3 不要让一个泛化的 `outValid` 同时承担多种语义
+
+这次一个很典型的问题是：
+
+1. `LaneMultiply` 以前只有一个泛化 `outValid`。
+2. `Controller` 以前也输出泛化的 `outValid`。
+3. 波形里看到 `outValid` 时，并不能立刻知道它对应的是哪一路数据。
+
+这会产生两个坏处：
+
+1. 命名本身带来误导，阅读 RTL 时必须来回跳转确认语义。
+2. 一旦 valid 链分裂成多源输入，就很容易把“某个输入 valid”误读成“最终输出 valid”。
+
+因此 v2 的经验是：
+
+1. 控制器输出数据相关 valid 时，优先命名成 `xBeatValid`、`gBeatValid` 这类与数据绑定的名字。
+2. 最终输出 valid，优先命名成 `yBeatValid`，再由顶层映射到接口 `outValid`。
+3. 只有模块外部接口真的需要统一端口名时，才保留 `outValid`。
+
+### 17.4 现代 Verdi FSDB 流应优先使用 `VERDI_HOME`
+
+本轮外部仿真里，另一个明确结论是：
+
+1. Verdi 2024.09 下，优先使用 `VERDI_HOME` 加 `-debug_access+all` 的方式启用 FSDB。
+2. 老的 `-P novas.tab pli.a` 方式虽然有时还能跑，但已经不应作为主流程依赖。
+
+当前更稳的做法是：
+
+1. 编译前显式 `export VERDI_HOME=...`
+2. VCS 带上 `-kdb -debug_access+all`
+3. testbench 内部保留 `$fsdbDumpfile/$fsdbDumpvars`
+
+这样更容易在不同 rerun 之间保持一致，也更少踩工具版本差异的坑。
+
+### 17.5 波形“更整齐”不等于功能已经正确
+
+这次 valid 链补齐后，波形可读性的确明显变好，但外部仿真仍然暴露出：
+
+1. `beats_requested=12288`
+2. `beats_produced=12272`
+
+也就是仍然少了 `16` 个 beat。
+
+这个结果说明两个事实：
+
+1. `valid` 显式化首先改善的是可观察性，而不是自动保证功能正确。
+2. 当波形已经清晰后，剩下的问题更可能是 token 边界、最后一拍对齐、或者状态轮换的逻辑 bug。
+
+因此后续调试顺序应当是：
+
+1. 先让 `valid` 命名和时序边界可读。
+2. 再用外部仿真确认吞吐和最终计数。
+3. 最后针对丢拍、边界拍、清零拍去做精确定位。
+
+### 17.6 生成 RTL 永远只从 source-of-truth 重建
+
+本轮还有一个必须坚持的工程纪律：
+
+1. 不手改生成的 `DUTPacked.sv`、`CoreDUT.sv`、`LaneMultiply.sv` 等 RTL。
+2. 任何结构变化都只回写到 Simulink builder 和 controller 模板。
+3. 重新生成后，再用 VCS/Verdi 验证结果。
+
+当前这条 source-of-truth 链很明确：
+
+1. `transformer_simulink/layer/buildRmsNormalizationModel.m`
+2. `transformer_simulink/layer/private/rmsNormalizationControllerTemplate.txt`
+3. `transformer_simulink/layer/generateRmsNormalizationHDL.m`
+
+这能避免“波形修好了，但下次一生成全丢”的伪进展。
+
+### 17.7 v2 的实际价值
+
+`RTL v2` 的价值可以概括为：
+
+1. 计算链上的数据与 valid 对应关系更清楚。
+2. `CoreDUT` 边界职责更干净。
+3. `LaneMultiply` 与 `InvRmsLatch` 的语义更自解释。
+4. 外部 VCS/Verdi/FSDB 流已经可以稳定复现。
+5. 后续排查丢失 `16` 个 beat 的问题，已经有了更好的可观察基础。
+
+换句话说，v2 不是“最终版”，但它已经把系统从“靠猜测看波形”推进到了“可以围绕明确握手和边界继续收敛”的阶段。
