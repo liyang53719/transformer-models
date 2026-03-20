@@ -36,6 +36,22 @@ module tb_rmsNormalization_fsdb;
   integer out_count = 0;
   integer x_valid_count = 0;
   integer inv_rms_valid_count = 0;
+  integer sim_cycle_count = 0;
+  integer busy_cycle_count = 0;
+  integer out_valid_cycle_count = 0;
+  integer sram_write_cycle_count = 0;
+  integer sram_read_cycle_count = 0;
+  integer busy_nonout_cycle_count = 0;
+  integer busy_nonout_write_only_cycle_count = 0;
+  integer busy_nonout_read_only_cycle_count = 0;
+  integer busy_nonout_write_read_cycle_count = 0;
+  integer busy_nonout_idle_cycle_count = 0;
+  integer out_write_overlap_cycle_count = 0;
+  integer capture_inv_rms_count = 0;
+  integer rsqrt_valid0_count = 0;
+  integer rsqrt_valid1_count = 0;
+  integer latch_valid0_count = 0;
+  integer latch_valid1_count = 0;
   integer compare_beat_count = 0;
   integer compare_lane_count = 0;
   integer compare_fail_count = 0;
@@ -73,6 +89,14 @@ module tb_rmsNormalization_fsdb;
     $fsdbDumpfile(fsdb_path);
     $fsdbDumpvars(0, tb_rmsNormalization_fsdb, "+all");
   end
+
+  task automatic print_util_summary;
+    begin
+      $display("TB_DONE beats_requested=%0d x_valid_count=%0d beats_produced=%0d inv_rms_valid_count=%0d compare_beats=%0d compare_lanes=%0d max_abs_err=%0.9g max_rel_err=%0.9g", beat_count, x_valid_count, out_count, inv_rms_valid_count, compare_beat_count, compare_lane_count, max_abs_err, max_rel_err);
+      $display("TB_UTIL cycles=%0d busy=%0d busy_pct=%0.3f out_valid=%0d out_valid_pct=%0.3f sram_write=%0d sram_write_pct=%0.3f sram_read=%0d sram_read_pct=%0.3f out_write_overlap=%0d out_write_overlap_pct=%0.3f", sim_cycle_count, busy_cycle_count, (busy_cycle_count * 100.0) / sim_cycle_count, out_valid_cycle_count, (out_valid_cycle_count * 100.0) / sim_cycle_count, sram_write_cycle_count, (sram_write_cycle_count * 100.0) / sim_cycle_count, sram_read_cycle_count, (sram_read_cycle_count * 100.0) / sim_cycle_count, out_write_overlap_cycle_count, (out_write_overlap_cycle_count * 100.0) / sim_cycle_count);
+      $display("TB_BUSY_BREAKDOWN busy_nonout=%0d busy_nonout_pct=%0.3f write_only=%0d read_only=%0d write_read=%0d idle=%0d idle_pct=%0.3f", busy_nonout_cycle_count, (busy_nonout_cycle_count * 100.0) / sim_cycle_count, busy_nonout_write_only_cycle_count, busy_nonout_read_only_cycle_count, busy_nonout_write_read_cycle_count, busy_nonout_idle_cycle_count, (busy_nonout_idle_cycle_count * 100.0) / sim_cycle_count);
+    end
+  endtask
 
   always #5 clk = ~clk;
 
@@ -126,6 +150,17 @@ module tb_rmsNormalization_fsdb;
     real rel_err;
     real rel_den;
     begin
+      if (compare_token_beat_idx == BEATS_PER_TOKEN - 1 && compare_token_idx < 4) begin
+        $display(
+          "TB_LAST_BEAT_DBG token=%0d read_bank=%0d selected_inv_rms=%0.9g latch0=%0.9g latch1=%0.9g",
+          compare_token_idx,
+          dut.u_CoreDUT.sramReadBank,
+          $bitstoshortreal(dut.u_CoreDUT.SelectedInvRms_out1),
+          $bitstoshortreal(dut.u_CoreDUT.InvRmsLatch0_invRmsLatched),
+          $bitstoshortreal(dut.u_CoreDUT.InvRmsLatch1_invRmsLatched)
+        );
+      end
+
       for (lane_idx = 0; lane_idx < LANES; lane_idx = lane_idx + 1) begin
         observed_value = $bitstoshortreal(packed_lane_word(packed_beat, lane_idx));
         expected_value_real = expected_value(compare_token_idx, compare_token_beat_idx, lane_idx);
@@ -214,6 +249,61 @@ module tb_rmsNormalization_fsdb;
       beat_count <= 0;
       out_count <= 0;
     end else begin
+      sim_cycle_count <= sim_cycle_count + 1;
+
+      if (busy) begin
+        busy_cycle_count <= busy_cycle_count + 1;
+      end
+
+      if (outValid) begin
+        out_valid_cycle_count <= out_valid_cycle_count + 1;
+      end
+
+      if (dut.u_CoreDUT.sramWriteValid) begin
+        sram_write_cycle_count <= sram_write_cycle_count + 1;
+      end
+
+      if (dut.u_CoreDUT.TokenSram_readValid) begin
+        sram_read_cycle_count <= sram_read_cycle_count + 1;
+      end
+
+      if (outValid && dut.u_CoreDUT.sramWriteValid) begin
+        out_write_overlap_cycle_count <= out_write_overlap_cycle_count + 1;
+      end
+
+      if (dut.u_CoreDUT.captureInvRms) begin
+        capture_inv_rms_count <= capture_inv_rms_count + 1;
+      end
+
+      if (dut.u_CoreDUT.ScalarRsqrt0_invRmsValid) begin
+        rsqrt_valid0_count <= rsqrt_valid0_count + 1;
+      end
+
+      if (dut.u_CoreDUT.ScalarRsqrt1_invRmsValid) begin
+        rsqrt_valid1_count <= rsqrt_valid1_count + 1;
+      end
+
+      if (dut.u_CoreDUT.InvRmsLatch0_invRmsLatchedValid) begin
+        latch_valid0_count <= latch_valid0_count + 1;
+      end
+
+      if (dut.u_CoreDUT.InvRmsLatch1_invRmsLatchedValid) begin
+        latch_valid1_count <= latch_valid1_count + 1;
+      end
+
+      if (busy && !outValid) begin
+        busy_nonout_cycle_count <= busy_nonout_cycle_count + 1;
+        if (dut.u_CoreDUT.sramWriteValid && dut.u_CoreDUT.TokenSram_readValid) begin
+          busy_nonout_write_read_cycle_count <= busy_nonout_write_read_cycle_count + 1;
+        end else if (dut.u_CoreDUT.sramWriteValid) begin
+          busy_nonout_write_only_cycle_count <= busy_nonout_write_only_cycle_count + 1;
+        end else if (dut.u_CoreDUT.TokenSram_readValid) begin
+          busy_nonout_read_only_cycle_count <= busy_nonout_read_only_cycle_count + 1;
+        end else begin
+          busy_nonout_idle_cycle_count <= busy_nonout_idle_cycle_count + 1;
+        end
+      end
+
       if (pending_valid) begin
         beat_count <= beat_count + 1;
       end
@@ -231,31 +321,11 @@ module tb_rmsNormalization_fsdb;
       end
 
       if (dut.u_CoreDUT.captureInvRms) begin
-        if (sum_compare_token_idx < 4) begin
-          $display(
-            "TB_SUM_DBG token=%0d beats_seen=%0d current_sum_valid=%0d observed=%0.9g expected=%0.9g ratio=%0.9g",
-            sum_compare_token_idx,
-            beat_count,
-            dut.u_CoreDUT.BeatAccumulator_currentSumValid,
-            $bitstoshortreal(dut.u_CoreDUT.BeatAccumulator_currentSum),
-            token_sum_sq[sum_compare_token_idx],
-            $bitstoshortreal(dut.u_CoreDUT.BeatAccumulator_currentSum) / token_sum_sq[sum_compare_token_idx]
-          );
-        end
         sum_compare_token_idx <= sum_compare_token_idx + 1;
       end
 
-      if (dut.u_CoreDUT.InvRmsLatch_invRmsLatchedValid) begin
+      if (dut.u_CoreDUT.SelectedInvRmsValid_out1) begin
         inv_rms_valid_count <= inv_rms_valid_count + 1;
-        if (inv_compare_token_idx < 4) begin
-          $display(
-            "TB_INVRMS_DBG token=%0d observed=%0.9g expected=%0.9g ratio=%0.9g",
-            inv_compare_token_idx,
-            $bitstoshortreal(dut.u_CoreDUT.InvRmsLatch_invRmsLatched),
-            token_inv_rms[inv_compare_token_idx],
-            $bitstoshortreal(dut.u_CoreDUT.InvRmsLatch_invRmsLatched) / token_inv_rms[inv_compare_token_idx]
-          );
-        end
         inv_compare_token_idx <= inv_compare_token_idx + 1;
       end
     end
@@ -309,18 +379,20 @@ module tb_rmsNormalization_fsdb;
           drain_cycles = drain_cycles + 1;
         end
         if (compare_beat_count != EXPECTED_BEATS) begin
+          print_util_summary();
           $fatal(1, "TB compare beat count mismatch: expected=%0d observed=%0d", EXPECTED_BEATS, compare_beat_count);
         end
         if (compare_fail_count != 0) begin
+          print_util_summary();
           $fatal(1, "TB numeric compare failed: compare_fail_count=%0d max_abs_err=%0.9g max_rel_err=%0.9g", compare_fail_count, max_abs_err, max_rel_err);
         end
         $display("TB_COMPARE_OK beats_compared=%0d lanes_compared=%0d max_abs_err=%0.9g max_rel_err=%0.9g", compare_beat_count, compare_lane_count, max_abs_err, max_rel_err);
-        $display("TB_DONE beats_requested=%0d x_valid_count=%0d beats_produced=%0d inv_rms_valid_count=%0d compare_beats=%0d compare_lanes=%0d max_abs_err=%0.9g max_rel_err=%0.9g", beat_count, x_valid_count, out_count, inv_rms_valid_count, compare_beat_count, compare_lane_count, max_abs_err, max_rel_err);
+        print_util_summary();
         $finish;
       end
       begin
         repeat (30000) @(posedge clk);
-        $display("TB_TIMEOUT beats_requested=%0d x_valid_count=%0d beats_produced=%0d inv_rms_valid_count=%0d compare_beats=%0d compare_lanes=%0d max_abs_err=%0.9g max_rel_err=%0.9g pending_valid=%0d pending_addr=%0d ddrReadEn=%0d ddrReadAddr=%0d busy=%0d done=%0d", beat_count, x_valid_count, out_count, inv_rms_valid_count, compare_beat_count, compare_lane_count, max_abs_err, max_rel_err, pending_valid, pending_addr, ddrReadEn, ddrReadAddr, busy, done);
+        $display("TB_TIMEOUT beats_requested=%0d x_valid_count=%0d beats_produced=%0d inv_rms_valid_count=%0d capture_count=%0d rsqrt0=%0d rsqrt1=%0d latch0=%0d latch1=%0d compare_beats=%0d compare_lanes=%0d max_abs_err=%0.9g max_rel_err=%0.9g pending_valid=%0d pending_addr=%0d ddrReadEn=%0d ddrReadAddr=%0d busy=%0d done=%0d", beat_count, x_valid_count, out_count, inv_rms_valid_count, capture_inv_rms_count, rsqrt_valid0_count, rsqrt_valid1_count, latch_valid0_count, latch_valid1_count, compare_beat_count, compare_lane_count, max_abs_err, max_rel_err, pending_valid, pending_addr, ddrReadEn, ddrReadAddr, busy, done);
         $fatal(1, "TB timeout waiting for done");
       end
     join_any

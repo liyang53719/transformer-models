@@ -7,13 +7,13 @@
 /home/yang/Documents/prj/matlab_DL_transfromer/transformer_models_neo/work/hdl/simulink_rmsNormalization/rmsNormalization/BeatReduce.sv
 /home/yang/Documents/prj/matlab_DL_transfromer/transformer_models_neo/work/hdl/simulink_rmsNormalization/rmsNormalization/nfp_mul_single.sv
 /home/yang/Documents/prj/matlab_DL_transfromer/transformer_models_neo/work/hdl/simulink_rmsNormalization/rmsNormalization/LaneMultiply.sv
+/home/yang/Documents/prj/matlab_DL_transfromer/transformer_models_neo/work/hdl/simulink_rmsNormalization/rmsNormalization/InvRmsLatch0.sv
 /home/yang/Documents/prj/matlab_DL_transfromer/transformer_models_neo/work/hdl/simulink_rmsNormalization/rmsNormalization/SquareBeat.sv
 /home/yang/Documents/prj/matlab_DL_transfromer/transformer_models_neo/work/hdl/simulink_rmsNormalization/rmsNormalization/SramCore.sv
 /home/yang/Documents/prj/matlab_DL_transfromer/transformer_models_neo/work/hdl/simulink_rmsNormalization/rmsNormalization/TokenSram.sv
-/home/yang/Documents/prj/matlab_DL_transfromer/transformer_models_neo/work/hdl/simulink_rmsNormalization/rmsNormalization/BeatAccumulator.sv
+/home/yang/Documents/prj/matlab_DL_transfromer/transformer_models_neo/work/hdl/simulink_rmsNormalization/rmsNormalization/BeatAccumulator0.sv
 /home/yang/Documents/prj/matlab_DL_transfromer/transformer_models_neo/work/hdl/simulink_rmsNormalization/rmsNormalization/nfp_rsqrt_single.sv
-/home/yang/Documents/prj/matlab_DL_transfromer/transformer_models_neo/work/hdl/simulink_rmsNormalization/rmsNormalization/ScalarRsqrt.sv
-/home/yang/Documents/prj/matlab_DL_transfromer/transformer_models_neo/work/hdl/simulink_rmsNormalization/rmsNormalization/InvRmsLatch.sv
+/home/yang/Documents/prj/matlab_DL_transfromer/transformer_models_neo/work/hdl/simulink_rmsNormalization/rmsNormalization/ScalarRsqrt0.sv
 /home/yang/Documents/prj/matlab_DL_transfromer/transformer_models_neo/work/hdl/simulink_rmsNormalization/rmsNormalization/Controller.sv
 /home/yang/Documents/prj/matlab_DL_transfromer/transformer_models_neo/work/hdl/simulink_rmsNormalization/rmsNormalization/CoreDUT.sv
 /home/yang/Documents/prj/matlab_DL_transfromer/transformer_models_neo/work/hdl/simulink_rmsNormalization/rmsNormalization/Pack.sv

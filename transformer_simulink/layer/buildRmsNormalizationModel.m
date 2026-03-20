@@ -83,12 +83,44 @@ add_block('simulink/Ports & Subsystems/In1', [subsystem '/ddrDataValid'], 'Posit
 
 add_block('simulink/Ports & Subsystems/Subsystem', [subsystem '/SquareBeat'], 'Position', [105 150 220 220]);
 add_block('simulink/Ports & Subsystems/Subsystem', [subsystem '/BeatReduce'], 'Position', [245 150 360 220]);
-add_block('simulink/Ports & Subsystems/Subsystem', [subsystem '/BeatAccumulator'], 'Position', [390 120 600 235]);
 add_block('simulink/Ports & Subsystems/Subsystem', [subsystem '/TokenSram'], 'Position', [255 255 435 415]);
-add_block('simulink/Ports & Subsystems/Subsystem', [subsystem '/ScalarRsqrt'], 'Position', [630 55 785 125]);
-add_block('simulink/Ports & Subsystems/Subsystem', [subsystem '/InvRmsLatch'], 'Position', [815 55 980 145]);
-add_block('simulink/Discrete/Unit Delay', [subsystem '/ClearAccumulatorFeedback'], ...
-    'InitialCondition', 'false', 'Position', [995 78 1040 102]);
+add_block('simulink/Discrete/Delay', [subsystem '/WriteBankAccumDelay'], ...
+    'DelayLength', '41', 'InitialCondition', 'false', 'Position', [365 300 430 324]);
+add_block('simulink/Logic and Bit Operations/Logical Operator', [subsystem '/WriteBankNot'], ...
+    'Operator', 'NOT', 'Position', [385 238 420 262]);
+add_block('simulink/Logic and Bit Operations/Logical Operator', [subsystem '/BeatSumValidBank0'], ...
+    'Operator', 'AND', 'Inputs', '2', 'Position', [445 118 480 142]);
+add_block('simulink/Logic and Bit Operations/Logical Operator', [subsystem '/BeatSumValidBank1'], ...
+    'Operator', 'AND', 'Inputs', '2', 'Position', [445 258 480 282]);
+add_block('simulink/Ports & Subsystems/Subsystem', [subsystem '/BeatAccumulator0'], 'Position', [510 70 720 185]);
+add_block('simulink/Ports & Subsystems/Subsystem', [subsystem '/BeatAccumulator1'], 'Position', [510 210 720 325]);
+add_block('simulink/Ports & Subsystems/Subsystem', [subsystem '/ScalarRsqrt0'], 'Position', [750 40 905 110]);
+add_block('simulink/Ports & Subsystems/Subsystem', [subsystem '/ScalarRsqrt1'], 'Position', [750 180 905 250]);
+add_block('simulink/Logic and Bit Operations/Logical Operator', [subsystem '/CaptureBankNot'], ...
+    'Operator', 'NOT', 'Position', [760 330 795 354]);
+add_block('simulink/Logic and Bit Operations/Logical Operator', [subsystem '/CaptureInvRmsBank0'], ...
+    'Operator', 'AND', 'Inputs', '2', 'Position', [820 320 855 344]);
+add_block('simulink/Logic and Bit Operations/Logical Operator', [subsystem '/CaptureInvRmsBank1'], ...
+    'Operator', 'AND', 'Inputs', '2', 'Position', [820 355 855 379]);
+add_block('simulink/Ports & Subsystems/Subsystem', [subsystem '/InvRmsLatch0'], 'Position', [930 35 1095 125]);
+add_block('simulink/Ports & Subsystems/Subsystem', [subsystem '/InvRmsLatch1'], 'Position', [930 175 1095 265]);
+add_block('simulink/Discrete/Unit Delay', [subsystem '/ClearAccumulatorFeedback0'], ...
+    'InitialCondition', 'false', 'Position', [1110 58 1155 82]);
+add_block('simulink/Discrete/Unit Delay', [subsystem '/ClearAccumulatorFeedback1'], ...
+    'InitialCondition', 'false', 'Position', [1110 198 1155 222]);
+add_block('simulink/Logic and Bit Operations/Logical Operator', [subsystem '/ReadBankNot'], ...
+    'Operator', 'NOT', 'Position', [1120 300 1155 324]);
+add_block('simulink/Logic and Bit Operations/Relational Operator', [subsystem '/ReadAddrIsZero'], ...
+    'Operator', '==', 'Position', [1120 430 1155 454]);
+add_block('simulink/Sources/Constant', [subsystem '/ReadAddrZeroConst'], ...
+    'Value', 'uint16(0)', 'OutDataTypeStr', 'uint16', 'Position', [1060 430 1100 454]);
+add_block('simulink/Signal Routing/Switch', [subsystem '/SelectedInvRms'], ...
+    'Criteria', 'u2 ~= 0', 'Threshold', '0.5', 'Position', [1180 292 1215 346]);
+add_block('simulink/Signal Routing/Switch', [subsystem '/SelectedInvRmsValid'], ...
+    'Criteria', 'u2 ~= 0', 'Threshold', '0.5', 'Position', [1180 352 1215 406]);
+add_block('simulink/Logic and Bit Operations/Logical Operator', [subsystem '/OutputTokenStart'], ...
+    'Operator', 'AND', 'Inputs', '2', 'Position', [1180 430 1215 454]);
+add_block('simulink/Ports & Subsystems/Subsystem', [subsystem '/OutputInvRmsLatch'], 'Position', [1245 300 1410 390]);
 add_block('simulink/Ports & Subsystems/Subsystem', [subsystem '/LaneMultiply'], 'Position', [870 225 1055 350]);
 add_block('simulink/User-Defined Functions/MATLAB Function', [subsystem '/Controller'], 'Position', [105 20 255 330]);
 set_param([subsystem '/Controller'], 'SystemSampleTime', '1');
@@ -99,12 +131,16 @@ chart.Script = iBuildControllerScript();
 
 add_block('simulink/Signal Attributes/Signal Specification', [subsystem '/CfgBeatSpec'], ...
     'Dimensions', '[1 8]', 'OutDataTypeStr', 'single', 'Position', [80 90 130 120]);
-add_block('simulink/Signal Attributes/Signal Specification', [subsystem '/CurrentSumSpec'], ...
-    'Dimensions', '1', 'OutDataTypeStr', 'single', 'Position', [620 160 680 184]);
-add_block('simulink/Signal Attributes/Signal Specification', [subsystem '/AddrSpec'], ...
+add_block('simulink/Signal Attributes/Signal Specification', [subsystem '/WriteAddrSpec'], ...
     'Dimensions', '1', 'OutDataTypeStr', 'uint16', 'Position', [285 300 340 324]);
-add_block('simulink/Signal Attributes/Signal Specification', [subsystem '/BankSpec'], ...
+add_block('simulink/Signal Attributes/Signal Specification', [subsystem '/WriteBankSpec'], ...
     'Dimensions', '1', 'OutDataTypeStr', 'boolean', 'Position', [285 330 340 354]);
+add_block('simulink/Signal Attributes/Signal Specification', [subsystem '/ReadAddrSpec'], ...
+    'Dimensions', '1', 'OutDataTypeStr', 'uint16', 'Position', [285 360 340 384]);
+add_block('simulink/Signal Attributes/Signal Specification', [subsystem '/ReadBankSpec'], ...
+    'Dimensions', '1', 'OutDataTypeStr', 'boolean', 'Position', [285 390 340 414]);
+add_block('simulink/Signal Attributes/Signal Specification', [subsystem '/CaptureBankSpec'], ...
+    'Dimensions', '1', 'OutDataTypeStr', 'boolean', 'Position', [285 420 340 444]);
 
 add_block('simulink/Ports & Subsystems/Out1', [subsystem '/outBeat'], 'Position', [1090 178 1120 192]);
 add_block('simulink/Ports & Subsystems/Out1', [subsystem '/outValid'], 'Position', [1090 218 1120 232], 'Port', '2');
@@ -115,25 +151,37 @@ add_block('simulink/Ports & Subsystems/Out1', [subsystem '/busy'], 'Position', [
 
 set_param([subsystem '/SquareBeat'], 'TreatAsAtomicUnit', 'on');
 set_param([subsystem '/BeatReduce'], 'TreatAsAtomicUnit', 'on');
-set_param([subsystem '/BeatAccumulator'], 'TreatAsAtomicUnit', 'on');
+set_param([subsystem '/BeatAccumulator0'], 'TreatAsAtomicUnit', 'on');
+set_param([subsystem '/BeatAccumulator1'], 'TreatAsAtomicUnit', 'on');
 set_param([subsystem '/TokenSram'], 'TreatAsAtomicUnit', 'on');
-set_param([subsystem '/ScalarRsqrt'], 'TreatAsAtomicUnit', 'on');
-set_param([subsystem '/InvRmsLatch'], 'TreatAsAtomicUnit', 'on');
+set_param([subsystem '/ScalarRsqrt0'], 'TreatAsAtomicUnit', 'on');
+set_param([subsystem '/ScalarRsqrt1'], 'TreatAsAtomicUnit', 'on');
+set_param([subsystem '/InvRmsLatch0'], 'TreatAsAtomicUnit', 'on');
+set_param([subsystem '/InvRmsLatch1'], 'TreatAsAtomicUnit', 'on');
+set_param([subsystem '/OutputInvRmsLatch'], 'TreatAsAtomicUnit', 'on');
 set_param([subsystem '/LaneMultiply'], 'TreatAsAtomicUnit', 'on');
 hdlset_param([subsystem '/SquareBeat'], 'BalanceDelays', 'on');
 hdlset_param([subsystem '/BeatReduce'], 'BalanceDelays', 'on');
-hdlset_param([subsystem '/BeatAccumulator'], 'BalanceDelays', 'on');
+hdlset_param([subsystem '/BeatAccumulator0'], 'BalanceDelays', 'on');
+hdlset_param([subsystem '/BeatAccumulator1'], 'BalanceDelays', 'on');
 hdlset_param([subsystem '/TokenSram'], 'BalanceDelays', 'on');
-hdlset_param([subsystem '/ScalarRsqrt'], 'BalanceDelays', 'on');
-hdlset_param([subsystem '/InvRmsLatch'], 'BalanceDelays', 'on');
+hdlset_param([subsystem '/ScalarRsqrt0'], 'BalanceDelays', 'on');
+hdlset_param([subsystem '/ScalarRsqrt1'], 'BalanceDelays', 'on');
+hdlset_param([subsystem '/InvRmsLatch0'], 'BalanceDelays', 'on');
+hdlset_param([subsystem '/InvRmsLatch1'], 'BalanceDelays', 'on');
+hdlset_param([subsystem '/OutputInvRmsLatch'], 'BalanceDelays', 'on');
 hdlset_param([subsystem '/LaneMultiply'], 'BalanceDelays', 'on');
 
 iBuildSquareBeatSubsystem(subsystem);
 iBuildBeatReduceSubsystem(subsystem);
-iBuildBeatAccumulatorSubsystem(subsystem);
+iBuildBeatAccumulatorSubsystem(subsystem, 'BeatAccumulator0');
+iBuildBeatAccumulatorSubsystem(subsystem, 'BeatAccumulator1');
 iBuildTokenSramSubsystem(subsystem);
-iBuildScalarRsqrtSubsystem(subsystem);
-iBuildInvRmsLatchSubsystem(subsystem);
+iBuildScalarRsqrtSubsystem(subsystem, 'ScalarRsqrt0');
+iBuildScalarRsqrtSubsystem(subsystem, 'ScalarRsqrt1');
+iBuildInvRmsLatchSubsystem(subsystem, 'InvRmsLatch0');
+iBuildInvRmsLatchSubsystem(subsystem, 'InvRmsLatch1');
+iBuildInvRmsLatchSubsystem(subsystem, 'OutputInvRmsLatch');
 iBuildLaneMultiplySubsystem(subsystem);
 
 add_line(subsystem, 'ddrDataBeat/1', 'TokenSram/1');
@@ -141,43 +189,80 @@ add_line(subsystem, 'ddrDataBeat/1', 'SquareBeat/1');
 add_line(subsystem, 'ddrDataValid/1', 'SquareBeat/2');
 add_line(subsystem, 'SquareBeat/1', 'BeatReduce/1');
 add_line(subsystem, 'SquareBeat/2', 'BeatReduce/2');
-add_line(subsystem, 'BeatReduce/1', 'BeatAccumulator/1');
-add_line(subsystem, 'BeatReduce/2', 'BeatAccumulator/2');
-add_line(subsystem, 'ClearAccumulatorFeedback/1', 'BeatAccumulator/3');
-add_line(subsystem, 'BeatAccumulator/1', 'CurrentSumSpec/1');
-add_line(subsystem, 'CurrentSumSpec/1', 'ScalarRsqrt/1');
-add_line(subsystem, 'BeatAccumulator/2', 'ScalarRsqrt/2');
-add_line(subsystem, 'Controller/4', 'AddrSpec/1');
-add_line(subsystem, 'AddrSpec/1', 'TokenSram/2');
-add_line(subsystem, 'Controller/5', 'BankSpec/1');
-add_line(subsystem, 'BankSpec/1', 'TokenSram/3');
-add_line(subsystem, 'Controller/6', 'TokenSram/4');
-add_line(subsystem, 'Controller/7', 'TokenSram/5');
-add_line(subsystem, 'Controller/8', 'TokenSram/6');
-add_line(subsystem, 'Controller/9', 'TokenSram/7');
-add_line(subsystem, 'ScalarRsqrt/1', 'InvRmsLatch/1');
-add_line(subsystem, 'ScalarRsqrt/2', 'InvRmsLatch/2');
-add_line(subsystem, 'Controller/3', 'InvRmsLatch/3');
-add_line(subsystem, 'InvRmsLatch/1', 'LaneMultiply/5');
-add_line(subsystem, 'InvRmsLatch/2', 'LaneMultiply/6');
+add_line(subsystem, 'Controller/5', 'WriteAddrSpec/1');
+add_line(subsystem, 'WriteAddrSpec/1', 'TokenSram/2');
+add_line(subsystem, 'Controller/6', 'WriteBankSpec/1');
+add_line(subsystem, 'WriteBankSpec/1', 'TokenSram/3');
+add_line(subsystem, 'WriteBankSpec/1', 'WriteBankAccumDelay/1');
+add_line(subsystem, 'Controller/7', 'TokenSram/4');
+add_line(subsystem, 'BeatReduce/1', 'BeatAccumulator0/1');
+add_line(subsystem, 'BeatReduce/1', 'BeatAccumulator1/1');
+add_line(subsystem, 'BeatReduce/2', 'BeatSumValidBank0/1');
+add_line(subsystem, 'BeatReduce/2', 'BeatSumValidBank1/1');
+add_line(subsystem, 'WriteBankAccumDelay/1', 'WriteBankNot/1');
+add_line(subsystem, 'WriteBankNot/1', 'BeatSumValidBank0/2');
+add_line(subsystem, 'WriteBankAccumDelay/1', 'BeatSumValidBank1/2');
+add_line(subsystem, 'BeatSumValidBank0/1', 'BeatAccumulator0/2');
+add_line(subsystem, 'BeatSumValidBank1/1', 'BeatAccumulator1/2');
+add_line(subsystem, 'ClearAccumulatorFeedback0/1', 'BeatAccumulator0/3');
+add_line(subsystem, 'ClearAccumulatorFeedback1/1', 'BeatAccumulator1/3');
+add_line(subsystem, 'BeatAccumulator0/1', 'ScalarRsqrt0/1');
+add_line(subsystem, 'BeatAccumulator0/2', 'ScalarRsqrt0/2');
+add_line(subsystem, 'BeatAccumulator1/1', 'ScalarRsqrt1/1');
+add_line(subsystem, 'BeatAccumulator1/2', 'ScalarRsqrt1/2');
+add_line(subsystem, 'Controller/4', 'CaptureBankSpec/1');
+add_line(subsystem, 'CaptureBankSpec/1', 'CaptureBankNot/1');
+add_line(subsystem, 'Controller/3', 'CaptureInvRmsBank0/1');
+add_line(subsystem, 'Controller/3', 'CaptureInvRmsBank1/1');
+add_line(subsystem, 'CaptureBankNot/1', 'CaptureInvRmsBank0/2');
+add_line(subsystem, 'CaptureBankSpec/1', 'CaptureInvRmsBank1/2');
+add_line(subsystem, 'ScalarRsqrt0/1', 'InvRmsLatch0/1');
+add_line(subsystem, 'ScalarRsqrt0/2', 'InvRmsLatch0/2');
+add_line(subsystem, 'CaptureInvRmsBank0/1', 'InvRmsLatch0/3');
+add_line(subsystem, 'ScalarRsqrt1/1', 'InvRmsLatch1/1');
+add_line(subsystem, 'ScalarRsqrt1/2', 'InvRmsLatch1/2');
+add_line(subsystem, 'CaptureInvRmsBank1/1', 'InvRmsLatch1/3');
+add_line(subsystem, 'InvRmsLatch0/3', 'ClearAccumulatorFeedback0/1');
+add_line(subsystem, 'InvRmsLatch1/3', 'ClearAccumulatorFeedback1/1');
+add_line(subsystem, 'Controller/8', 'ReadAddrSpec/1');
+add_line(subsystem, 'ReadAddrSpec/1', 'TokenSram/5');
+add_line(subsystem, 'Controller/9', 'ReadBankSpec/1');
+add_line(subsystem, 'ReadBankSpec/1', 'TokenSram/6');
+add_line(subsystem, 'ReadBankSpec/1', 'ReadBankNot/1');
+add_line(subsystem, 'Controller/10', 'TokenSram/7');
+add_line(subsystem, 'InvRmsLatch1/1', 'SelectedInvRms/1');
+add_line(subsystem, 'ReadBankSpec/1', 'SelectedInvRms/2');
+add_line(subsystem, 'InvRmsLatch0/1', 'SelectedInvRms/3');
+add_line(subsystem, 'InvRmsLatch1/2', 'SelectedInvRmsValid/1');
+add_line(subsystem, 'ReadBankSpec/1', 'SelectedInvRmsValid/2');
+add_line(subsystem, 'InvRmsLatch0/2', 'SelectedInvRmsValid/3');
+add_line(subsystem, 'ReadAddrSpec/1', 'ReadAddrIsZero/1');
+add_line(subsystem, 'ReadAddrZeroConst/1', 'ReadAddrIsZero/2');
+add_line(subsystem, 'Controller/10', 'OutputTokenStart/1');
+add_line(subsystem, 'ReadAddrIsZero/1', 'OutputTokenStart/2');
+add_line(subsystem, 'SelectedInvRms/1', 'OutputInvRmsLatch/1');
+add_line(subsystem, 'SelectedInvRmsValid/1', 'OutputInvRmsLatch/2');
+add_line(subsystem, 'OutputTokenStart/1', 'OutputInvRmsLatch/3');
+add_line(subsystem, 'OutputInvRmsLatch/1', 'LaneMultiply/5');
+add_line(subsystem, 'OutputInvRmsLatch/2', 'LaneMultiply/6');
 
 add_line(subsystem, 'start/1', 'Controller/1');
 add_line(subsystem, 'cfgGammaBeat/1', 'CfgBeatSpec/1');
 add_line(subsystem, 'CfgBeatSpec/1', 'Controller/2');
 add_line(subsystem, 'cfgGammaValid/1', 'Controller/3');
 add_line(subsystem, 'ddrDataValid/1', 'Controller/4');
-add_line(subsystem, 'InvRmsLatch/3', 'ClearAccumulatorFeedback/1');
-add_line(subsystem, 'ClearAccumulatorFeedback/1', 'Controller/5');
+add_line(subsystem, 'ClearAccumulatorFeedback0/1', 'Controller/5');
+add_line(subsystem, 'ClearAccumulatorFeedback1/1', 'Controller/6');
 add_line(subsystem, 'TokenSram/1', 'LaneMultiply/1');
 add_line(subsystem, 'TokenSram/2', 'LaneMultiply/2');
 add_line(subsystem, 'Controller/1', 'LaneMultiply/3');
 add_line(subsystem, 'Controller/2', 'LaneMultiply/4');
 add_line(subsystem, 'LaneMultiply/1', 'outBeat/1');
 add_line(subsystem, 'LaneMultiply/2', 'outValid/1');
-add_line(subsystem, 'Controller/10', 'ddrReadAddr/1');
-add_line(subsystem, 'Controller/11', 'ddrReadEn/1');
-add_line(subsystem, 'Controller/12', 'done/1');
-add_line(subsystem, 'Controller/13', 'busy/1');
+add_line(subsystem, 'Controller/11', 'ddrReadAddr/1');
+add_line(subsystem, 'Controller/12', 'ddrReadEn/1');
+add_line(subsystem, 'Controller/13', 'done/1');
+add_line(subsystem, 'Controller/14', 'busy/1');
 
 if enableLogs
     iAddStreamingDebugLogs(subsystem);
@@ -369,8 +454,11 @@ add_line(target, 'AddAll/1', 'beatSum/1');
 add_line(target, 'squaredBeatValid/1', 'beatSumValid/1');
 end
 
-function iBuildBeatAccumulatorSubsystem(subsystem)
-target = [subsystem '/BeatAccumulator'];
+function iBuildBeatAccumulatorSubsystem(subsystem, blockName)
+if nargin < 2
+    blockName = 'BeatAccumulator';
+end
+target = [subsystem '/' blockName];
 iDeleteSubsystemContents(target);
 numBanks = 32;
 feedbackDelayLength = numBanks - 1;
@@ -509,8 +597,11 @@ add_line(target, 'BeatSumValidBool/1', 'CurrentSumValidAlign/1');
 add_line(target, 'CurrentSumValidAlign/1', 'currentSumValid/1');
 end
 
-function iBuildScalarRsqrtSubsystem(subsystem)
-target = [subsystem '/ScalarRsqrt'];
+function iBuildScalarRsqrtSubsystem(subsystem, blockName)
+if nargin < 2
+    blockName = 'ScalarRsqrt';
+end
+target = [subsystem '/' blockName];
 iDeleteSubsystemContents(target);
 add_block('simulink/Ports & Subsystems/In1', [target '/currentSum'], 'Position', [30 38 60 52]);
 add_block('simulink/Ports & Subsystems/In1', [target '/currentSumValid'], 'Position', [30 83 60 97], 'Port', '2', 'OutDataTypeStr', 'boolean');
@@ -547,8 +638,11 @@ add_line(target, 'InvRmsValidReg/1', 'InvRmsValidAlign/1');
 add_line(target, 'InvRmsValidAlign/1', 'invRmsValid/1');
 end
 
-function iBuildInvRmsLatchSubsystem(subsystem)
-target = [subsystem '/InvRmsLatch'];
+function iBuildInvRmsLatchSubsystem(subsystem, blockName)
+if nargin < 2
+    blockName = 'InvRmsLatch';
+end
+target = [subsystem '/' blockName];
 iDeleteSubsystemContents(target);
 add_block('simulink/Ports & Subsystems/In1', [target '/invRmsIn'], 'Position', [30 33 60 47]);
 add_block('simulink/Ports & Subsystems/In1', [target '/invRmsInValid'], 'Position', [30 68 60 82], 'Port', '2', 'OutDataTypeStr', 'boolean');
@@ -634,18 +728,22 @@ end
 
 function iAddStreamingDebugLogs(subsystem)
 logSpecs = {
-    'BeatAccumulator/1', 'CurrentSumLog', 'currentSumLog', [930 90 1020 110];
-    'BeatAccumulator/2', 'CurrentSumValidLog', 'currentSumValidLog', [930 115 1020 135];
-    'Controller/3', 'CaptureInvRmsLog', 'captureInvRmsLog', [930 150 1020 170];
-    'TokenSram/1', 'TokenSramReadBeatLog', 'tokenSramReadBeatLog', [930 175 1020 195];
-    'TokenSram/2', 'TokenSramReadValidLog', 'tokenSramReadValidLog', [930 200 1020 220];
-    'ScalarRsqrt/1', 'ScalarRsqrtDataLog', 'scalarRsqrtDataLog', [930 225 1020 245];
-    'ScalarRsqrt/2', 'ScalarRsqrtValidLog', 'scalarRsqrtValidLog', [930 250 1020 270];
-    'InvRmsLatch/1', 'InvRmsDataLog', 'invRmsDataLog', [930 275 1020 295];
-    'InvRmsLatch/2', 'InvRmsValidLog', 'invRmsValidLog', [930 300 1020 320];
-    'InvRmsLatch/3', 'ClearAccumulatorLog', 'clearAccumulatorLog', [930 325 1020 345];
-    'LaneMultiply/1', 'LaneMultiplyDataLog', 'laneMultiplyDataLog', [930 350 1020 370];
-    'LaneMultiply/2', 'LaneMultiplyValidLog', 'laneMultiplyValidLog', [930 375 1020 395]
+    'BeatAccumulator0/1', 'CurrentSumLog0', 'currentSumLog0', [930 60 1020 80];
+    'BeatAccumulator0/2', 'CurrentSumValidLog0', 'currentSumValidLog0', [930 85 1020 105];
+    'BeatAccumulator1/1', 'CurrentSumLog1', 'currentSumLog1', [930 110 1020 130];
+    'BeatAccumulator1/2', 'CurrentSumValidLog1', 'currentSumValidLog1', [930 135 1020 155];
+    'Controller/3', 'CaptureInvRmsLog', 'captureInvRmsLog', [930 160 1020 180];
+    'Controller/4', 'CaptureInvRmsBankLog', 'captureInvRmsBankLog', [930 185 1020 205];
+    'TokenSram/1', 'TokenSramReadBeatLog', 'tokenSramReadBeatLog', [930 210 1020 230];
+    'TokenSram/2', 'TokenSramReadValidLog', 'tokenSramReadValidLog', [930 235 1020 255];
+    'ScalarRsqrt0/1', 'ScalarRsqrtDataLog0', 'scalarRsqrtDataLog0', [930 260 1020 280];
+    'ScalarRsqrt0/2', 'ScalarRsqrtValidLog0', 'scalarRsqrtValidLog0', [930 285 1020 305];
+    'ScalarRsqrt1/1', 'ScalarRsqrtDataLog1', 'scalarRsqrtDataLog1', [930 310 1020 330];
+    'ScalarRsqrt1/2', 'ScalarRsqrtValidLog1', 'scalarRsqrtValidLog1', [930 335 1020 355];
+    'SelectedInvRms/1', 'InvRmsDataLog', 'invRmsDataLog', [930 360 1020 380];
+    'SelectedInvRmsValid/1', 'InvRmsValidLog', 'invRmsValidLog', [930 385 1020 405];
+    'LaneMultiply/1', 'LaneMultiplyDataLog', 'laneMultiplyDataLog', [930 410 1020 430];
+    'LaneMultiply/2', 'LaneMultiplyValidLog', 'laneMultiplyValidLog', [930 435 1020 455]
     };
 
 for logIndex = 1:size(logSpecs, 1)

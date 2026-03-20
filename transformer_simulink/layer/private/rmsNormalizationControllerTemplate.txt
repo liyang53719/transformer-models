@@ -1,4 +1,4 @@
-function [gBeat, gBeatValid, captureInvRms, sramWriteAddr, sramWriteBank, sramWriteValid, sramReadAddr, sramReadBank, sramReadValid, ddrReadAddr, ddrReadEn, done, busy] = Controller(start, cfgGammaBeat, cfgGammaValid, ddrDataValid, invRmsAccepted)
+function [gBeat, gBeatValid, captureInvRms, captureInvRmsBank, sramWriteAddr, sramWriteBank, sramWriteValid, sramReadAddr, sramReadBank, sramReadValid, ddrReadAddr, ddrReadEn, done, busy] = Controller(start, cfgGammaBeat, cfgGammaValid, ddrDataValid, invRmsAcceptedBank0, invRmsAcceptedBank1)
 %#codegen
 
 beatsPerToken = uint16(192);
@@ -6,11 +6,11 @@ numTokens = uint8(64);
 warmupFlushCycles = uint8(166);
 
 persistent state gammaMem gammaWriteBeat gammaLoaded
-persistent loadActive loadTokenIndex nextLoadTokenIndex loadBank
+persistent loadActive loadTokenIndex loadBankState nextLoadTokenIndex nextLoadBankState
 persistent requestBeatIndex receiveBeatIndex sumFlushCount
-persistent pendingInvRms pendingTokenIndex pendingBank
-persistent readyTokenValid readyTokenIndex readyBank
-persistent outputActive outputTokenIndex outputBank outputBeatIndex
+persistent pendingInvRms pendingTokenIndex pendingBankState
+persistent readyTokenValid readyTokenIndex readyBankState
+persistent outputActive outputTokenIndex outputBankState outputBeatIndex
 
 if isempty(state)
     state = uint8(0);
@@ -19,26 +19,28 @@ if isempty(state)
     gammaLoaded = false;
     loadActive = false;
     loadTokenIndex = uint8(0);
+    loadBankState = false;
     nextLoadTokenIndex = uint8(0);
-    loadBank = false;
+    nextLoadBankState = false;
     requestBeatIndex = uint16(0);
     receiveBeatIndex = uint16(0);
     sumFlushCount = uint8(0);
     pendingInvRms = false;
     pendingTokenIndex = uint8(0);
-    pendingBank = false;
+    pendingBankState = false;
     readyTokenValid = false;
     readyTokenIndex = uint8(0);
-    readyBank = false;
+    readyBankState = false;
     outputActive = false;
     outputTokenIndex = uint8(0);
-    outputBank = false;
+    outputBankState = false;
     outputBeatIndex = uint16(0);
 end
 
 gBeat = zeros(1, 8, 'single');
 gBeatValid = false;
 captureInvRms = false;
+captureInvRmsBank = false;
 sramWriteAddr = uint16(0);
 sramWriteBank = false;
 sramWriteValid = false;
@@ -60,20 +62,30 @@ if cfgGammaValid ~= 0
     end
 end
 
+if pendingBankState
+    invRmsAccepted = invRmsAcceptedBank1;
+else
+    invRmsAccepted = invRmsAcceptedBank0;
+end
+
 switch state
     case uint8(0)
         if start ~= 0 && gammaLoaded
             state = uint8(1);
             loadActive = true;
             loadTokenIndex = uint8(0);
+            loadBankState = false;
             nextLoadTokenIndex = uint8(1);
-            loadBank = false;
+            nextLoadBankState = true;
             requestBeatIndex = uint16(0);
             receiveBeatIndex = uint16(0);
             sumFlushCount = uint8(0);
             pendingInvRms = false;
             readyTokenValid = false;
             outputActive = false;
+            readyBankState = false;
+            pendingBankState = false;
+            outputBankState = false;
             outputBeatIndex = uint16(0);
             busy = true;
         end
@@ -84,6 +96,7 @@ switch state
         if pendingInvRms && sumFlushCount > uint8(0)
             if sumFlushCount == uint8(1)
                 captureInvRms = true;
+                captureInvRmsBank = pendingBankState;
             end
             sumFlushCount = sumFlushCount - uint8(1);
         end
@@ -91,33 +104,26 @@ switch state
         if invRmsAccepted ~= 0 && pendingInvRms
             readyTokenValid = true;
             readyTokenIndex = pendingTokenIndex;
-            readyBank = pendingBank;
+            readyBankState = pendingBankState;
             pendingInvRms = false;
         end
 
-        if ~outputActive && readyTokenValid
-            outputActive = true;
-            outputTokenIndex = readyTokenIndex;
-            outputBank = readyBank;
-            outputBeatIndex = uint16(0);
-            readyTokenValid = false;
-        end
-
         if loadActive
+            sramWriteBank = loadBankState;
             [ddrReadEn, ddrReadAddr, requestBeatIndex] = iIssueRead(ddrReadEn, ddrReadAddr, loadTokenIndex, requestBeatIndex, beatsPerToken);
             if ddrDataValid ~= 0
                 sramWriteAddr = receiveBeatIndex;
-                sramWriteBank = loadBank;
                 sramWriteValid = true;
 
                 if receiveBeatIndex == beatsPerToken - 1
                     if warmupFlushCycles == uint8(0)
                         captureInvRms = true;
+                        captureInvRmsBank = loadBankState;
                     end
                     sumFlushCount = warmupFlushCycles;
                     pendingInvRms = true;
                     pendingTokenIndex = loadTokenIndex;
-                    pendingBank = loadBank;
+                    pendingBankState = loadBankState;
                     loadActive = false;
                     requestBeatIndex = uint16(0);
                     receiveBeatIndex = uint16(0);
@@ -129,7 +135,7 @@ switch state
 
         if outputActive
             sramReadAddr = outputBeatIndex;
-            sramReadBank = outputBank;
+            sramReadBank = outputBankState;
             sramReadValid = true;
             gBeat = iReadBeat(gammaMem, outputBeatIndex);
             gBeatValid = true;
@@ -143,6 +149,7 @@ switch state
                     readyTokenValid = false;
                     outputActive = false;
                     nextLoadTokenIndex = uint8(0);
+                    nextLoadBankState = false;
                     requestBeatIndex = uint16(0);
                     receiveBeatIndex = uint16(0);
                     outputBeatIndex = uint16(0);
@@ -157,15 +164,25 @@ switch state
             end
         end
 
-        if state ~= uint8(0) && ~loadActive && ~pendingInvRms && nextLoadTokenIndex < numTokens
-            [canStartLoad, freeBank] = iGetFreeBank(outputActive, outputBank, pendingInvRms, pendingBank, readyTokenValid, readyBank);
+        if ~outputActive && readyTokenValid
+            outputActive = true;
+            outputTokenIndex = readyTokenIndex;
+            outputBankState = readyBankState;
+            outputBeatIndex = uint16(0);
+            readyTokenValid = false;
+        end
+
+        if state ~= uint8(0) && ~loadActive && nextLoadTokenIndex < numTokens
+            canStartLoad = iCanStartLoad(nextLoadBankState, outputActive, outputBankState, pendingInvRms, pendingBankState, readyTokenValid, readyBankState);
             if canStartLoad
                 loadActive = true;
                 loadTokenIndex = nextLoadTokenIndex;
+                loadBankState = nextLoadBankState;
                 nextLoadTokenIndex = nextLoadTokenIndex + uint8(1);
-                loadBank = freeBank;
+                nextLoadBankState = ~nextLoadBankState;
                 requestBeatIndex = uint16(0);
                 receiveBeatIndex = uint16(0);
+                [ddrReadEn, ddrReadAddr, requestBeatIndex] = iIssueRead(ddrReadEn, ddrReadAddr, loadTokenIndex, requestBeatIndex, beatsPerToken);
             end
         end
 end
@@ -195,42 +212,20 @@ if requestBeatIndex < beatsPerToken
 end
 end
 
-function [canStartLoad, freeBank] = iGetFreeBank(outputActive, outputBank, pendingInvRms, pendingBank, readyTokenValid, readyBank)
-bank0Occupied = false;
-bank1Occupied = false;
+function canStartLoad = iCanStartLoad(targetBank, outputActive, outputBankState, pendingInvRms, pendingBankState, readyTokenValid, readyBankState)
+occupied = false;
 
-if outputActive
-    if outputBank
-        bank1Occupied = true;
-    else
-        bank0Occupied = true;
-    end
+if outputActive && outputBankState == targetBank
+    occupied = true;
 end
 
-if pendingInvRms
-    if pendingBank
-        bank1Occupied = true;
-    else
-        bank0Occupied = true;
-    end
+if pendingInvRms && pendingBankState == targetBank
+    occupied = true;
 end
 
-if readyTokenValid
-    if readyBank
-        bank1Occupied = true;
-    else
-        bank0Occupied = true;
-    end
+if readyTokenValid && readyBankState == targetBank
+    occupied = true;
 end
 
-if ~bank0Occupied
-    canStartLoad = true;
-    freeBank = false;
-elseif ~bank1Occupied
-    canStartLoad = true;
-    freeBank = true;
-else
-    canStartLoad = false;
-    freeBank = false;
-end
+canStartLoad = ~occupied;
 end
