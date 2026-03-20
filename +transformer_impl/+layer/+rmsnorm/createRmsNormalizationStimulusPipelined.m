@@ -1,5 +1,5 @@
-function stimulus = createRmsNormalizationStimulus(X, g, epsilon)
-% createRmsNormalizationStimulus   Create stream stimulus and capture DUT output.
+function stimulus = createRmsNormalizationStimulusPipelined(X, g, epsilon)
+% createRmsNormalizationStimulusPipelined   Exercise the overlapped RMSNorm prototype.
 
 if nargin < 3
     epsilon = single(1e-6);
@@ -9,7 +9,7 @@ numTokens = 64;
 hiddenSize = 1536;
 lanesPerBeat = 8;
 beatsPerToken = hiddenSize / lanesPerBeat;
-maxCycles = 1 + beatsPerToken + 1 + numTokens * (2 * beatsPerToken + 2);
+maxCycles = 1 + beatsPerToken + 1 + numTokens * (beatsPerToken + 4);
 
 resetTrace = false(maxCycles, 1);
 startTrace = false(maxCycles, 1);
@@ -41,7 +41,7 @@ for simCycle = 1:maxCycles
         ddrBeatTrace(simCycle, :) = pendingBeat;
     end
 
-    [outBeat, outValid, ddrReadAddr, ddrReadEn, done] = transformer_impl.layer.rmsNormalization( ...
+    [outBeat, outValid, ddrReadAddr, ddrReadEn, done] = transformer_impl.layer.rmsnorm.rmsNormalizationPipelined( ...
         resetTrace(simCycle), startTrace(simCycle), cfgBeatTrace(simCycle, :), cfgValidTrace(simCycle), ...
         ddrBeatTrace(simCycle, :), ddrValidTrace(simCycle), epsilon);
 
@@ -68,26 +68,9 @@ for simCycle = 1:maxCycles
 end
 
 Y = reshape(collectedBeats(1:collectedCount, :).', hiddenSize, numTokens).';
-flushSlackCycles = numTokens * 22 + 8;
-tailCycles = flushSlackCycles + 4;
-extendedLength = cycleIndex + tailCycles;
-time = (0:extendedLength-1).';
-
-resetSeq = [resetTrace(1:cycleIndex); false(tailCycles, 1)];
-startSeq = [startTrace(1:cycleIndex); false(tailCycles, 1)];
-cfgGammaValidSeq = [cfgValidTrace(1:cycleIndex); false(tailCycles, 1)];
-cfgGammaBeatSeq = [cfgBeatTrace(1:cycleIndex, :); zeros(tailCycles, lanesPerBeat, 'single')];
-ddrDataValidSeq = [ddrValidTrace(1:cycleIndex); false(tailCycles, 1)];
-ddrDataBeatSeq = [ddrBeatTrace(1:cycleIndex, :); zeros(tailCycles, lanesPerBeat, 'single')];
-
 stimulus = struct();
-stimulus.resetSeq = timeseries(resetSeq, time);
-stimulus.startSeq = timeseries(startSeq, time);
-stimulus.cfgGammaValidSeq = timeseries(cfgGammaValidSeq, time);
-stimulus.cfgGammaBeatSeq = timeseries(cfgGammaBeatSeq, time);
-stimulus.ddrDataValidSeq = timeseries(ddrDataValidSeq, time);
-stimulus.ddrDataBeatSeq = timeseries(ddrDataBeatSeq, time);
-stimulus.stopTime = extendedLength;
 stimulus.output = Y;
+stimulus.stopTime = cycleIndex;
+stimulus.cycles = cycleIndex;
 
 end

@@ -2,6 +2,7 @@ classdef trmsNormalization < matlab.unittest.TestCase
     properties(Constant)
         Eps = single(1e-6)
         ComparisonTolerance = single(1e-5)
+        MinimumCycleImprovement = 1000
     end
 
     methods(TestClassSetup)
@@ -18,12 +19,30 @@ classdef trmsNormalization < matlab.unittest.TestCase
             X = single(randn(64, 1536));
             g = single(randn(1, 1536));
 
-            stim = transformer_impl.layer.createRmsNormalizationStimulus(X, g, test.Eps);
+            stim = transformer_impl.layer.rmsnorm.createRmsNormalizationStimulus(X, g, test.Eps);
             actual = stim.output;
-            expected = transformer.layer.rmsNormalization(X.', g.', test.Eps).';
+            iVerifyMatchesReference(test, actual, X, g);
+        end
 
-            maxError = max(abs(actual - expected), [], 'all');
-            test.verifyLessThanOrEqual(maxError, test.ComparisonTolerance);
+        function pipelinedMatchesReferenceImplementation(test)
+            rng(0);
+            X = single(randn(64, 1536));
+            g = single(randn(1, 1536));
+
+            stim = transformer_impl.layer.rmsnorm.createRmsNormalizationStimulusPipelined(X, g, test.Eps);
+            actual = stim.output;
+            iVerifyMatchesReference(test, actual, X, g);
+        end
+
+        function pipelinedReducesCycleCount(test)
+            rng(0);
+            X = single(randn(64, 1536));
+            g = single(randn(1, 1536));
+
+            baselineStim = transformer_impl.layer.rmsnorm.createRmsNormalizationStimulus(X, g, test.Eps);
+            pipelinedStim = transformer_impl.layer.rmsnorm.createRmsNormalizationStimulusPipelined(X, g, test.Eps);
+
+            test.verifyGreaterThan(baselineStim.stopTime - pipelinedStim.cycles, test.MinimumCycleImprovement);
         end
 
         function simulinkMatchesMatlabImplementation(test)
@@ -44,8 +63,8 @@ classdef trmsNormalization < matlab.unittest.TestCase
             X = single(randn(64, 1536));
             g = single(randn(1, 1536));
             epsilon = test.Eps;
-            stim = transformer_impl.layer.createRmsNormalizationStimulus(X, g, epsilon);
-            expected = transformer.layer.rmsNormalization(X.', g.', epsilon).';
+            stim = transformer_impl.layer.rmsnorm.createRmsNormalizationStimulus(X, g, epsilon);
+            expected = iReferenceOutput(X, g, epsilon);
             [ddrDataValidSeq, ddrDataBeatSeq, simStopTime] = iCreateSimulinkMemoryTrace(X);
 
             simIn = Simulink.SimulationInput(modelName);
@@ -69,6 +88,16 @@ classdef trmsNormalization < matlab.unittest.TestCase
             clear cleaner;
         end
     end
+end
+
+function iVerifyMatchesReference(test, actual, X, g)
+expected = iReferenceOutput(X, g, test.Eps);
+maxError = max(abs(actual - expected), [], 'all');
+test.verifyLessThanOrEqual(maxError, test.ComparisonTolerance);
+end
+
+function expected = iReferenceOutput(X, g, epsilon)
+expected = transformer.layer.rmsNormalization(X.', g.', epsilon).';
 end
 
 function repoRoot = iGetRepoRoot()

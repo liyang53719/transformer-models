@@ -2,7 +2,7 @@ function targetDir = generateRmsNormalizationHDL()
 % generateRmsNormalizationHDL   Generate Verilog for the MATLAB streaming DUT.
 
 thisDir = fileparts(mfilename('fullpath'));
-repoRoot = fullfile(thisDir, '..', '..');
+repoRoot = fullfile(thisDir, '..', '..', '..');
 repoRoot = char(java.io.File(repoRoot).getCanonicalPath());
 targetDir = fullfile(repoRoot, 'work', 'hdl', 'matlab_rmsNormalization');
 
