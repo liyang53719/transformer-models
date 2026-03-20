@@ -86,7 +86,7 @@
 
 ### 4.2 控制器模板去掉边界气泡
 
-在 `transformer_simulink/layer/private/rmsNormalizationControllerTemplate.txt` 的 `canStartLoad` 分支中，新增了一次立即发起首拍读请求的调用：
+在 `transformer_simulink/layer/rmsnorm/private/rmsNormalizationControllerTemplate.txt` 的 `canStartLoad` 分支中，新增了一次立即发起首拍读请求的调用：
 
 1. 新 token 被允许启动加载。
 2. 设置 `loadActive`、`loadTokenIndex`、bank 状态。

@@ -9,7 +9,7 @@ classdef trmsNormalization < matlab.unittest.TestCase
         function addRepoToPath(~)
             repoRoot = iGetRepoRoot();
             addpath(repoRoot);
-            addpath(fullfile(repoRoot, 'transformer_simulink', 'layer'));
+            addpath(fullfile(repoRoot, 'transformer_simulink', 'layer', 'rmsnorm'));
         end
     end
 
@@ -48,11 +48,11 @@ classdef trmsNormalization < matlab.unittest.TestCase
         function simulinkMatchesMatlabImplementation(test)
             repoRoot = iGetRepoRoot();
             addpath(repoRoot);
-            addpath(fullfile(repoRoot, 'transformer_simulink', 'layer'));
+            addpath(fullfile(repoRoot, 'transformer_simulink', 'layer', 'rmsnorm'));
             buildRmsNormalizationModel();
 
             modelName = 'rmsNormalization';
-            modelPath = fullfile(repoRoot, 'transformer_simulink', 'layer', [modelName '.slx']);
+            modelPath = fullfile(repoRoot, 'transformer_simulink', 'layer', 'rmsnorm', [modelName '.slx']);
 
             test.assertTrue(isfile(modelPath));
 

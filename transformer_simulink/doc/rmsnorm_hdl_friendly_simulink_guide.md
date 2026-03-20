@@ -714,9 +714,9 @@ v2 的处理方向是：
 
 当前这条 source-of-truth 链很明确：
 
-1. `transformer_simulink/layer/buildRmsNormalizationModel.m`
-2. `transformer_simulink/layer/private/rmsNormalizationControllerTemplate.txt`
-3. `transformer_simulink/layer/generateRmsNormalizationHDL.m`
+1. `transformer_simulink/layer/rmsnorm/buildRmsNormalizationModel.m`
+2. `transformer_simulink/layer/rmsnorm/private/rmsNormalizationControllerTemplate.txt`
+3. `transformer_simulink/layer/rmsnorm/generateRmsNormalizationHDL.m`
 
 这能避免“波形修好了，但下次一生成全丢”的伪进展。
 

@@ -67,7 +67,7 @@ disp('HS64_OK');
 end
 
 function harnessPath = iBuildHarnessModel(harnessName, simCycles, numTokens)
-repoRoot = fileparts(fileparts(fileparts(mfilename('fullpath'))));
+repoRoot = fileparts(fileparts(fileparts(fileparts(mfilename('fullpath')))));
 harnessDir = fullfile(repoRoot, 'work', 'simulink');
 harnessPath = fullfile(harnessDir, [harnessName '.slx']);
 

@@ -2,7 +2,7 @@ function targetDir = generateRmsNormalizationHDL()
 % generateRmsNormalizationHDL   Generate HDL for the packed Simulink DUT.
 
 thisDir = fileparts(mfilename('fullpath'));
-targetDir = fullfile(thisDir, '..', '..', 'work', 'hdl', 'simulink_rmsNormalization');
+targetDir = fullfile(thisDir, '..', '..', '..', 'work', 'hdl', 'simulink_rmsNormalization');
 targetDir = char(java.io.File(targetDir).getCanonicalPath());
 
 if ~isfolder(targetDir)
