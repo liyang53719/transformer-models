@@ -20,4 +20,3 @@
 /home/yang/Documents/prj/matlab_DL_transfromer/transformer_models_neo/work/hdl/simulink_rmsNormalization/rmsNormalization/nfp_wire_single_block.sv
 /home/yang/Documents/prj/matlab_DL_transfromer/transformer_models_neo/work/hdl/simulink_rmsNormalization/rmsNormalization/OutBeatPack.sv
 /home/yang/Documents/prj/matlab_DL_transfromer/transformer_models_neo/work/hdl/simulink_rmsNormalization/rmsNormalization/DUTPacked.sv
-/home/yang/Documents/prj/matlab_DL_transfromer/transformer_models_neo/work/hdl/simulink_rmsNormalization/tb_rmsNormalization_fsdb.sv

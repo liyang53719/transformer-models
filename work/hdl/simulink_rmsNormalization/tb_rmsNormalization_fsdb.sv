@@ -2,15 +2,20 @@
 
 module tb_rmsNormalization_fsdb;
 
+  string fsdb_path = "work/hdl/simulink_rmsNormalization/rmsNormalization/rmsNormalization.fsdb";
+
   localparam int LANES = 8;
   localparam int HIDDEN_SIZE = 1536;
   localparam int NUM_TOKENS = 64;
   localparam int BEATS_PER_TOKEN = HIDDEN_SIZE / LANES;
+  localparam int EXPECTED_BEATS = NUM_TOKENS * BEATS_PER_TOKEN;
+  localparam real EPSILON = 1536e-6;
+  localparam real COMPARE_ABS_TOL = 1.0e-4;
+  localparam real COMPARE_REL_TOL = 1.0e-6;
 
   reg clk = 1'b0;
   reg reset = 1'b1;
   reg clk_enable = 1'b1;
-  reg reset_1 = 1'b0;
   reg start = 1'b0;
   reg [31:0] cfgGammaBeat_lane [0:LANES-1];
   reg [255:0] cfgGammaBeat;
@@ -29,14 +34,27 @@ module tb_rmsNormalization_fsdb;
 
   integer beat_count = 0;
   integer out_count = 0;
+  integer x_valid_count = 0;
+  integer inv_rms_valid_count = 0;
+  integer compare_beat_count = 0;
+  integer compare_lane_count = 0;
+  integer compare_fail_count = 0;
+  integer compare_token_idx = 0;
+  integer compare_token_beat_idx = 0;
+  integer sum_compare_token_idx = 0;
+  integer inv_compare_token_idx = 0;
   integer pending_addr = 0;
   reg pending_valid = 1'b0;
+  real max_abs_err = 0.0;
+  real max_rel_err = 0.0;
+  shortreal token_scale [0:NUM_TOKENS-1];
+  real token_sum_sq [0:NUM_TOKENS-1];
+  real token_inv_rms [0:NUM_TOKENS-1];
 
   DUTPacked dut (
     .clk(clk),
     .reset(reset),
     .clk_enable(clk_enable),
-    .reset_1(reset_1),
     .start(start),
     .cfgGammaBeat(cfgGammaBeat),
     .cfgGammaValid(cfgGammaValid),
@@ -51,27 +69,97 @@ module tb_rmsNormalization_fsdb;
     .busy(busy)
   );
 
+  initial begin
+    $fsdbDumpfile(fsdb_path);
+    $fsdbDumpvars(0, tb_rmsNormalization_fsdb, "+all");
+  end
+
   always #5 clk = ~clk;
 
   function automatic [31:0] to_bits(input shortreal value);
     to_bits = $shortrealtobits(value);
   endfunction
 
+  function automatic shortreal gamma_value(input int beat_idx, input int lane_idx);
+    gamma_value = shortreal'(0.25 + beat_idx * 0.001 + lane_idx * 0.0001);
+  endfunction
+
+  function automatic shortreal x_value(input int token_idx, input int beat_idx, input int lane_idx);
+    x_value = shortreal'(-0.75 + token_idx * 0.01 + beat_idx * 0.001 + lane_idx * 0.0001);
+  endfunction
+
   function automatic [31:0] gamma_word(input int beat_idx, input int lane_idx);
-    shortreal value;
     begin
-      value = shortreal'(0.25 + beat_idx * 0.001 + lane_idx * 0.0001);
-      gamma_word = to_bits(value);
+      gamma_word = to_bits(gamma_value(beat_idx, lane_idx));
     end
   endfunction
 
   function automatic [31:0] x_word(input int token_idx, input int beat_idx, input int lane_idx);
-    shortreal value;
     begin
-      value = shortreal'(-0.75 + token_idx * 0.01 + beat_idx * 0.001 + lane_idx * 0.0001);
-      x_word = to_bits(value);
+      x_word = to_bits(x_value(token_idx, beat_idx, lane_idx));
     end
   endfunction
+
+  function automatic real abs_real(input real value);
+    begin
+      if (value < 0.0) begin
+        abs_real = -value;
+      end else begin
+        abs_real = value;
+      end
+    end
+  endfunction
+
+  function automatic [31:0] packed_lane_word(input [255:0] packed_beat, input int lane_idx);
+    packed_lane_word = packed_beat[(lane_idx * 32) +: 32];
+  endfunction
+
+  function automatic shortreal expected_value(input int token_idx, input int beat_idx, input int lane_idx);
+    expected_value = shortreal'(x_value(token_idx, beat_idx, lane_idx) * gamma_value(beat_idx, lane_idx) * token_scale[token_idx]);
+  endfunction
+
+  task automatic check_output_beat(input [255:0] packed_beat);
+    integer lane_idx;
+    real observed_value;
+    real expected_value_real;
+    real abs_err;
+    real rel_err;
+    real rel_den;
+    begin
+      for (lane_idx = 0; lane_idx < LANES; lane_idx = lane_idx + 1) begin
+        observed_value = $bitstoshortreal(packed_lane_word(packed_beat, lane_idx));
+        expected_value_real = expected_value(compare_token_idx, compare_token_beat_idx, lane_idx);
+        abs_err = abs_real(observed_value - expected_value_real);
+        rel_den = abs_real(expected_value_real);
+        if (rel_den < 1.0e-12) begin
+          rel_den = 1.0e-12;
+        end
+        rel_err = abs_err / rel_den;
+
+        if (abs_err > max_abs_err) begin
+          max_abs_err = abs_err;
+        end
+        if (rel_err > max_rel_err) begin
+          max_rel_err = rel_err;
+        end
+
+        if (abs_err > COMPARE_ABS_TOL && rel_err > COMPARE_REL_TOL) begin
+          compare_fail_count = compare_fail_count + 1;
+          $display("TB_COMPARE_FAIL token=%0d beat=%0d lane=%0d observed=%0.9g expected=%0.9g abs_err=%0.9g rel_err=%0.9g", compare_token_idx, compare_token_beat_idx, lane_idx, observed_value, expected_value_real, abs_err, rel_err);
+        end
+      end
+
+      compare_beat_count = compare_beat_count + 1;
+      compare_lane_count = compare_lane_count + LANES;
+
+      if (compare_token_beat_idx == BEATS_PER_TOKEN - 1) begin
+        compare_token_beat_idx = 0;
+        compare_token_idx = compare_token_idx + 1;
+      end else begin
+        compare_token_beat_idx = compare_token_beat_idx + 1;
+      end
+    end
+  endtask
 
   task automatic drive_gamma_beat(input int beat_idx);
     integer lane_idx;
@@ -134,7 +222,41 @@ module tb_rmsNormalization_fsdb;
       pending_addr <= ddrReadAddr;
 
       if (outValid) begin
+        check_output_beat(outBeat);
         out_count <= out_count + 1;
+      end
+
+      if (dut.u_CoreDUT.TokenSram_readValid) begin
+        x_valid_count <= x_valid_count + 1;
+      end
+
+      if (dut.u_CoreDUT.captureInvRms) begin
+        if (sum_compare_token_idx < 4) begin
+          $display(
+            "TB_SUM_DBG token=%0d beats_seen=%0d current_sum_valid=%0d observed=%0.9g expected=%0.9g ratio=%0.9g",
+            sum_compare_token_idx,
+            beat_count,
+            dut.u_CoreDUT.BeatAccumulator_currentSumValid,
+            $bitstoshortreal(dut.u_CoreDUT.BeatAccumulator_currentSum),
+            token_sum_sq[sum_compare_token_idx],
+            $bitstoshortreal(dut.u_CoreDUT.BeatAccumulator_currentSum) / token_sum_sq[sum_compare_token_idx]
+          );
+        end
+        sum_compare_token_idx <= sum_compare_token_idx + 1;
+      end
+
+      if (dut.u_CoreDUT.InvRmsLatch_invRmsLatchedValid) begin
+        inv_rms_valid_count <= inv_rms_valid_count + 1;
+        if (inv_compare_token_idx < 4) begin
+          $display(
+            "TB_INVRMS_DBG token=%0d observed=%0.9g expected=%0.9g ratio=%0.9g",
+            inv_compare_token_idx,
+            $bitstoshortreal(dut.u_CoreDUT.InvRmsLatch_invRmsLatched),
+            token_inv_rms[inv_compare_token_idx],
+            $bitstoshortreal(dut.u_CoreDUT.InvRmsLatch_invRmsLatched) / token_inv_rms[inv_compare_token_idx]
+          );
+        end
+        inv_compare_token_idx <= inv_compare_token_idx + 1;
       end
     end
   end
@@ -142,23 +264,29 @@ module tb_rmsNormalization_fsdb;
   initial begin
     integer beat_idx;
     integer lane_idx;
-
-    $fsdbDumpfile("work/hdl/simulink_rmsNormalization/rmsNormalization/rmsNormalization.fsdb");
-    $fsdbDumpvars(0, tb_rmsNormalization_fsdb, "+all");
+    integer token_idx;
+    real sum_sq;
 
     for (lane_idx = 0; lane_idx < LANES; lane_idx = lane_idx + 1) begin
       cfgGammaBeat_lane[lane_idx] = 32'h00000000;
       ddrDataBeat_lane[lane_idx] = 32'h00000000;
+    end
+    for (token_idx = 0; token_idx < NUM_TOKENS; token_idx = token_idx + 1) begin
+      sum_sq = 0.0;
+      for (beat_idx = 0; beat_idx < BEATS_PER_TOKEN; beat_idx = beat_idx + 1) begin
+        for (lane_idx = 0; lane_idx < LANES; lane_idx = lane_idx + 1) begin
+          sum_sq = sum_sq + x_value(token_idx, beat_idx, lane_idx) * x_value(token_idx, beat_idx, lane_idx);
+        end
+      end
+      token_sum_sq[token_idx] = sum_sq;
+      token_inv_rms[token_idx] = 1.0 / $sqrt(sum_sq + EPSILON);
+      token_scale[token_idx] = shortreal'($sqrt(HIDDEN_SIZE * 1.0) / $sqrt(sum_sq + EPSILON));
     end
     cfgGammaBeat = 256'h0;
     ddrDataBeat = 256'h0;
 
     repeat (5) @(negedge clk);
     reset <= 1'b0;
-
-    reset_1 <= 1'b1;
-    @(negedge clk);
-    reset_1 <= 1'b0;
 
     for (beat_idx = 0; beat_idx < BEATS_PER_TOKEN; beat_idx = beat_idx + 1) begin
       drive_gamma_beat(beat_idx);
@@ -173,13 +301,26 @@ module tb_rmsNormalization_fsdb;
   initial begin
     fork
       begin
+        integer drain_cycles;
         wait(done === 1'b1);
-        repeat (10) @(posedge clk);
-        $display("TB_DONE beats_requested=%0d beats_produced=%0d", beat_count, out_count);
+        drain_cycles = 0;
+        while (out_count < EXPECTED_BEATS && drain_cycles < 128) begin
+          @(posedge clk);
+          drain_cycles = drain_cycles + 1;
+        end
+        if (compare_beat_count != EXPECTED_BEATS) begin
+          $fatal(1, "TB compare beat count mismatch: expected=%0d observed=%0d", EXPECTED_BEATS, compare_beat_count);
+        end
+        if (compare_fail_count != 0) begin
+          $fatal(1, "TB numeric compare failed: compare_fail_count=%0d max_abs_err=%0.9g max_rel_err=%0.9g", compare_fail_count, max_abs_err, max_rel_err);
+        end
+        $display("TB_COMPARE_OK beats_compared=%0d lanes_compared=%0d max_abs_err=%0.9g max_rel_err=%0.9g", compare_beat_count, compare_lane_count, max_abs_err, max_rel_err);
+        $display("TB_DONE beats_requested=%0d x_valid_count=%0d beats_produced=%0d inv_rms_valid_count=%0d compare_beats=%0d compare_lanes=%0d max_abs_err=%0.9g max_rel_err=%0.9g", beat_count, x_valid_count, out_count, inv_rms_valid_count, compare_beat_count, compare_lane_count, max_abs_err, max_rel_err);
         $finish;
       end
       begin
-        repeat (200000) @(posedge clk);
+        repeat (30000) @(posedge clk);
+        $display("TB_TIMEOUT beats_requested=%0d x_valid_count=%0d beats_produced=%0d inv_rms_valid_count=%0d compare_beats=%0d compare_lanes=%0d max_abs_err=%0.9g max_rel_err=%0.9g pending_valid=%0d pending_addr=%0d ddrReadEn=%0d ddrReadAddr=%0d busy=%0d done=%0d", beat_count, x_valid_count, out_count, inv_rms_valid_count, compare_beat_count, compare_lane_count, max_abs_err, max_rel_err, pending_valid, pending_addr, ddrReadEn, ddrReadAddr, busy, done);
         $fatal(1, "TB timeout waiting for done");
       end
     join_any

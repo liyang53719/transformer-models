@@ -19,9 +19,7 @@ if isfile(legacyPackedWrapper)
     delete(legacyPackedWrapper);
 end
 
-buildRmsNormalizationModel();
-load_system('rmsNormalization');
-cleaner = onCleanup(@() close_system('rmsNormalization', 0));
+ensureRmsNormalizationModel();
 
 hdlset_param('rmsNormalization', 'TargetLanguage', 'SystemVerilog');
 hdlset_param('rmsNormalization', 'ScalarizePorts', 'off');
@@ -48,24 +46,33 @@ makehdl('rmsNormalization', ...
     'HDLGenerateWebview', 'off', ...
     'CodeGenerationOutput', 'GenerateHDLCode');
 
-iWriteFileList(targetDir);
-
-clear cleaner;
+iWriteFileLists(targetDir);
 
 end
 
-function iWriteFileList(targetDir)
+function iWriteFileLists(targetDir)
 statusPath = fullfile(targetDir, 'rmsNormalization', 'hdlcodegenstatus.json');
 statusInfo = jsondecode(fileread(statusPath));
 
-fileListPath = fullfile(targetDir, 'filelist.f');
+rtlFiles = cell(numel(statusInfo.GenFileList), 1);
+for fileIndex = 1:numel(statusInfo.GenFileList)
+    rtlFiles{fileIndex} = fullfile(targetDir, 'rmsNormalization', statusInfo.GenFileList{fileIndex});
+end
+
+tbPath = fullfile(targetDir, 'tb_rmsNormalization_fsdb.sv');
+assert(isfile(tbPath), 'Missing VCS testbench: %s', tbPath);
+
+iWriteFileList(fullfile(targetDir, 'rtl_filelist.f'), rtlFiles);
+iWriteFileList(fullfile(targetDir, 'filelist.f'), [rtlFiles; {tbPath}]);
+end
+
+function iWriteFileList(fileListPath, sourceFiles)
 fid = fopen(fileListPath, 'w');
 assert(fid >= 0, 'Failed to open filelist for writing: %s', fileListPath);
 cleaner = onCleanup(@() fclose(fid));
 
 fprintf(fid, '-timescale=1ns/1ps\n');
-for fileIndex = 1:numel(statusInfo.GenFileList)
-    fprintf(fid, '%s\n', fullfile(targetDir, 'rmsNormalization', statusInfo.GenFileList{fileIndex}));
+for fileIndex = 1:numel(sourceFiles)
+    fprintf(fid, '%s\n', sourceFiles{fileIndex});
 end
-fprintf(fid, '%s\n', fullfile(targetDir, 'tb_rmsNormalization_fsdb.sv'));
 end

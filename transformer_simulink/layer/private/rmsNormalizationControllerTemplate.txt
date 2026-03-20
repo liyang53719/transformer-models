@@ -1,175 +1,173 @@
-function [xBeat, xBeatValid, gBeat, gBeatValid, captureInvRms, ddrReadAddr, ddrReadEn, done, busy] = Controller(reset, start, cfgGammaBeat, cfgGammaValid, ddrDataBeat, ddrDataValid)
+function [gBeat, gBeatValid, captureInvRms, sramWriteAddr, sramWriteBank, sramWriteValid, sramReadAddr, sramReadBank, sramReadValid, ddrReadAddr, ddrReadEn, done, busy] = Controller(start, cfgGammaBeat, cfgGammaValid, ddrDataValid, invRmsAccepted)
 %#codegen
 
 beatsPerToken = uint16(192);
 numTokens = uint8(64);
-warmupFlushCycles = uint8(22);
+warmupFlushCycles = uint8(166);
 
-persistent state gammaMem tokenMemA tokenMemB
-persistent gammaWriteBeat gammaLoaded
-persistent outputTokenIndex prefetchTokenIndex
-persistent requestBeatIndex receiveBeatIndex outputBeatIndex
-persistent sumFlushCount loadingActive flushPending nextTokenReady
-persistent outputBank fillBank
+persistent state gammaMem gammaWriteBeat gammaLoaded
+persistent loadActive loadTokenIndex nextLoadTokenIndex loadBank
+persistent requestBeatIndex receiveBeatIndex sumFlushCount
+persistent pendingInvRms pendingTokenIndex pendingBank
+persistent readyTokenValid readyTokenIndex readyBank
+persistent outputActive outputTokenIndex outputBank outputBeatIndex
 
 if isempty(state)
     state = uint8(0);
     gammaMem = zeros(1, 1536, 'single');
-    tokenMemA = zeros(1, 1536, 'single');
-    tokenMemB = zeros(1, 1536, 'single');
     gammaWriteBeat = uint16(0);
     gammaLoaded = false;
-    outputTokenIndex = uint8(0);
-    prefetchTokenIndex = uint8(0);
+    loadActive = false;
+    loadTokenIndex = uint8(0);
+    nextLoadTokenIndex = uint8(0);
+    loadBank = false;
     requestBeatIndex = uint16(0);
     receiveBeatIndex = uint16(0);
-    outputBeatIndex = uint16(0);
     sumFlushCount = uint8(0);
-    loadingActive = false;
-    flushPending = false;
-    nextTokenReady = false;
-    outputBank = uint8(1);
-    fillBank = uint8(2);
+    pendingInvRms = false;
+    pendingTokenIndex = uint8(0);
+    pendingBank = false;
+    readyTokenValid = false;
+    readyTokenIndex = uint8(0);
+    readyBank = false;
+    outputActive = false;
+    outputTokenIndex = uint8(0);
+    outputBank = false;
+    outputBeatIndex = uint16(0);
 end
 
-xBeat = zeros(1, 8, 'single');
-xBeatValid = false;
 gBeat = zeros(1, 8, 'single');
 gBeatValid = false;
 captureInvRms = false;
+sramWriteAddr = uint16(0);
+sramWriteBank = false;
+sramWriteValid = false;
+sramReadAddr = uint16(0);
+sramReadBank = false;
+sramReadValid = false;
 ddrReadAddr = uint16(0);
 ddrReadEn = false;
 done = false;
 busy = state ~= uint8(0);
 
-if reset ~= 0
-    state = uint8(0);
-    gammaMem = zeros(1, 1536, 'single');
-    tokenMemA = zeros(1, 1536, 'single');
-    tokenMemB = zeros(1, 1536, 'single');
-    gammaWriteBeat = uint16(0);
-    gammaLoaded = false;
-    outputTokenIndex = uint8(0);
-    prefetchTokenIndex = uint8(0);
-    requestBeatIndex = uint16(0);
-    receiveBeatIndex = uint16(0);
-    outputBeatIndex = uint16(0);
-    sumFlushCount = uint8(0);
-    loadingActive = false;
-    flushPending = false;
-    nextTokenReady = false;
-    outputBank = uint8(1);
-    fillBank = uint8(2);
-else
-    if cfgGammaValid ~= 0
-        gammaMem = iWriteBeat(gammaMem, cfgGammaBeat, gammaWriteBeat);
-        if gammaWriteBeat == beatsPerToken - 1
-            gammaWriteBeat = uint16(0);
-            gammaLoaded = true;
-        else
-            gammaWriteBeat = gammaWriteBeat + uint16(1);
-        end
+if cfgGammaValid ~= 0
+    gammaMem = iWriteBeat(gammaMem, cfgGammaBeat, gammaWriteBeat);
+    if gammaWriteBeat == beatsPerToken - 1
+        gammaWriteBeat = uint16(0);
+        gammaLoaded = true;
+    else
+        gammaWriteBeat = gammaWriteBeat + uint16(1);
     end
+end
 
-    switch state
-        case uint8(0)
-            if start ~= 0 && gammaLoaded
-                state = uint8(1);
-                outputTokenIndex = uint8(0);
-                prefetchTokenIndex = uint8(0);
-                requestBeatIndex = uint16(0);
-                receiveBeatIndex = uint16(0);
-                outputBeatIndex = uint16(0);
-                sumFlushCount = uint8(0);
-                loadingActive = true;
-                flushPending = false;
-                nextTokenReady = false;
-                outputBank = uint8(1);
-                fillBank = uint8(2);
-                busy = true;
-            end
-
-        case uint8(1)
+switch state
+    case uint8(0)
+        if start ~= 0 && gammaLoaded
+            state = uint8(1);
+            loadActive = true;
+            loadTokenIndex = uint8(0);
+            nextLoadTokenIndex = uint8(1);
+            loadBank = false;
+            requestBeatIndex = uint16(0);
+            receiveBeatIndex = uint16(0);
+            sumFlushCount = uint8(0);
+            pendingInvRms = false;
+            readyTokenValid = false;
+            outputActive = false;
+            outputBeatIndex = uint16(0);
             busy = true;
-            [ddrReadEn, ddrReadAddr, requestBeatIndex] = iIssueRead(ddrReadEn, ddrReadAddr, outputTokenIndex, requestBeatIndex, beatsPerToken);
+        end
+
+    otherwise
+        busy = true;
+
+        if pendingInvRms && sumFlushCount > uint8(0)
+            if sumFlushCount == uint8(1)
+                captureInvRms = true;
+            end
+            sumFlushCount = sumFlushCount - uint8(1);
+        end
+
+        if invRmsAccepted ~= 0 && pendingInvRms
+            readyTokenValid = true;
+            readyTokenIndex = pendingTokenIndex;
+            readyBank = pendingBank;
+            pendingInvRms = false;
+        end
+
+        if ~outputActive && readyTokenValid
+            outputActive = true;
+            outputTokenIndex = readyTokenIndex;
+            outputBank = readyBank;
+            outputBeatIndex = uint16(0);
+            readyTokenValid = false;
+        end
+
+        if loadActive
+            [ddrReadEn, ddrReadAddr, requestBeatIndex] = iIssueRead(ddrReadEn, ddrReadAddr, loadTokenIndex, requestBeatIndex, beatsPerToken);
             if ddrDataValid ~= 0
-                [tokenMemA, tokenMemB] = iWriteBufferedBeat(tokenMemA, tokenMemB, outputBank, receiveBeatIndex, ddrDataBeat);
+                sramWriteAddr = receiveBeatIndex;
+                sramWriteBank = loadBank;
+                sramWriteValid = true;
+
                 if receiveBeatIndex == beatsPerToken - 1
-                    receiveBeatIndex = uint16(0);
-                    requestBeatIndex = uint16(0);
+                    if warmupFlushCycles == uint8(0)
+                        captureInvRms = true;
+                    end
                     sumFlushCount = warmupFlushCycles;
-                    loadingActive = false;
-                    flushPending = true;
-                    state = uint8(2);
+                    pendingInvRms = true;
+                    pendingTokenIndex = loadTokenIndex;
+                    pendingBank = loadBank;
+                    loadActive = false;
+                    requestBeatIndex = uint16(0);
+                    receiveBeatIndex = uint16(0);
                 else
                     receiveBeatIndex = receiveBeatIndex + uint16(1);
                 end
             end
+        end
 
-        case uint8(2)
-            busy = true;
-            if sumFlushCount == uint8(0)
-                captureInvRms = true;
-                flushPending = false;
-                nextTokenReady = false;
-                outputBeatIndex = uint16(0);
-                if numTokens > uint8(1)
-                    prefetchTokenIndex = uint8(1);
-                    requestBeatIndex = uint16(0);
-                    receiveBeatIndex = uint16(0);
-                    loadingActive = true;
-                end
-                state = uint8(3);
-            else
-                sumFlushCount = sumFlushCount - uint8(1);
-            end
-
-        case uint8(3)
-            busy = true;
-            xBeatValid = true;
-            gBeatValid = true;
-            xBeat = iReadBufferedBeat(tokenMemA, tokenMemB, outputBank, outputBeatIndex);
+        if outputActive
+            sramReadAddr = outputBeatIndex;
+            sramReadBank = outputBank;
+            sramReadValid = true;
             gBeat = iReadBeat(gammaMem, outputBeatIndex);
-
-            [tokenMemA, tokenMemB, captureInvRms, ddrReadEn, ddrReadAddr, requestBeatIndex, receiveBeatIndex, sumFlushCount, loadingActive, flushPending, nextTokenReady] = ...
-                iAdvanceBackground(tokenMemA, tokenMemB, fillBank, prefetchTokenIndex, ddrDataBeat, ddrDataValid, captureInvRms, ddrReadEn, ddrReadAddr, requestBeatIndex, receiveBeatIndex, sumFlushCount, loadingActive, flushPending, nextTokenReady, beatsPerToken);
+            gBeatValid = true;
 
             if outputBeatIndex == beatsPerToken - 1
                 if outputTokenIndex == numTokens - uint8(1)
                     done = true;
                     state = uint8(0);
-                    outputTokenIndex = uint8(0);
-                    prefetchTokenIndex = uint8(0);
+                    loadActive = false;
+                    pendingInvRms = false;
+                    readyTokenValid = false;
+                    outputActive = false;
+                    nextLoadTokenIndex = uint8(0);
                     requestBeatIndex = uint16(0);
                     receiveBeatIndex = uint16(0);
                     outputBeatIndex = uint16(0);
                     sumFlushCount = uint8(0);
-                    loadingActive = false;
-                    flushPending = false;
-                    nextTokenReady = false;
                     busy = false;
-                elseif nextTokenReady
-                    [outputTokenIndex, prefetchTokenIndex, requestBeatIndex, receiveBeatIndex, outputBeatIndex, loadingActive, flushPending, nextTokenReady, outputBank, fillBank] = ...
-                        iRotateTokens(outputTokenIndex, prefetchTokenIndex, requestBeatIndex, receiveBeatIndex, outputBeatIndex, loadingActive, flushPending, nextTokenReady, outputBank, fillBank, numTokens);
                 else
+                    outputActive = false;
                     outputBeatIndex = uint16(0);
-                    state = uint8(4);
                 end
             else
                 outputBeatIndex = outputBeatIndex + uint16(1);
             end
+        end
 
-        otherwise
-            busy = true;
-            [tokenMemA, tokenMemB, captureInvRms, ddrReadEn, ddrReadAddr, requestBeatIndex, receiveBeatIndex, sumFlushCount, loadingActive, flushPending, nextTokenReady] = ...
-                iAdvanceBackground(tokenMemA, tokenMemB, fillBank, prefetchTokenIndex, ddrDataBeat, ddrDataValid, captureInvRms, ddrReadEn, ddrReadAddr, requestBeatIndex, receiveBeatIndex, sumFlushCount, loadingActive, flushPending, nextTokenReady, beatsPerToken);
-
-            if nextTokenReady
-                [outputTokenIndex, prefetchTokenIndex, requestBeatIndex, receiveBeatIndex, outputBeatIndex, loadingActive, flushPending, nextTokenReady, outputBank, fillBank] = ...
-                    iRotateTokens(outputTokenIndex, prefetchTokenIndex, requestBeatIndex, receiveBeatIndex, outputBeatIndex, loadingActive, flushPending, nextTokenReady, outputBank, fillBank, numTokens);
-                state = uint8(3);
+        if state ~= uint8(0) && ~loadActive && ~pendingInvRms && nextLoadTokenIndex < numTokens
+            [canStartLoad, freeBank] = iGetFreeBank(outputActive, outputBank, pendingInvRms, pendingBank, readyTokenValid, readyBank);
+            if canStartLoad
+                loadActive = true;
+                loadTokenIndex = nextLoadTokenIndex;
+                nextLoadTokenIndex = nextLoadTokenIndex + uint8(1);
+                loadBank = freeBank;
+                requestBeatIndex = uint16(0);
+                receiveBeatIndex = uint16(0);
             end
-    end
+        end
 end
 
 end
@@ -189,22 +187,6 @@ for laneIndex = uint16(0):uint16(7)
 end
 end
 
-function [tokenMemA, tokenMemB] = iWriteBufferedBeat(tokenMemA, tokenMemB, bankIndex, beatIndex, beat)
-if bankIndex == uint8(1)
-    tokenMemA = iWriteBeat(tokenMemA, beat, beatIndex);
-else
-    tokenMemB = iWriteBeat(tokenMemB, beat, beatIndex);
-end
-end
-
-function beat = iReadBufferedBeat(tokenMemA, tokenMemB, bankIndex, beatIndex)
-if bankIndex == uint8(1)
-    beat = iReadBeat(tokenMemA, beatIndex);
-else
-    beat = iReadBeat(tokenMemB, beatIndex);
-end
-end
-
 function [ddrReadEn, ddrReadAddr, requestBeatIndex] = iIssueRead(ddrReadEn, ddrReadAddr, tokenIndex, requestBeatIndex, beatsPerToken)
 if requestBeatIndex < beatsPerToken
     ddrReadEn = true;
@@ -213,58 +195,42 @@ if requestBeatIndex < beatsPerToken
 end
 end
 
-function [tokenMemA, tokenMemB, captureInvRms, ddrReadEn, ddrReadAddr, requestBeatIndex, receiveBeatIndex, sumFlushCount, loadingActive, flushPending, nextTokenReady] = ...
-    iAdvanceBackground(tokenMemA, tokenMemB, fillBank, prefetchTokenIndex, ddrDataBeat, ddrDataValid, captureInvRms, ddrReadEn, ddrReadAddr, requestBeatIndex, receiveBeatIndex, sumFlushCount, loadingActive, flushPending, nextTokenReady, beatsPerToken)
+function [canStartLoad, freeBank] = iGetFreeBank(outputActive, outputBank, pendingInvRms, pendingBank, readyTokenValid, readyBank)
+bank0Occupied = false;
+bank1Occupied = false;
 
-startedFlushThisCycle = false;
-
-if loadingActive
-    [ddrReadEn, ddrReadAddr, requestBeatIndex] = iIssueRead(ddrReadEn, ddrReadAddr, prefetchTokenIndex, requestBeatIndex, beatsPerToken);
-end
-
-if ddrDataValid ~= 0
-    [tokenMemA, tokenMemB] = iWriteBufferedBeat(tokenMemA, tokenMemB, fillBank, receiveBeatIndex, ddrDataBeat);
-    if receiveBeatIndex == beatsPerToken - 1
-        receiveBeatIndex = uint16(0);
-        requestBeatIndex = uint16(0);
-        sumFlushCount = uint8(22);
-        loadingActive = false;
-        flushPending = true;
-        startedFlushThisCycle = true;
+if outputActive
+    if outputBank
+        bank1Occupied = true;
     else
-        receiveBeatIndex = receiveBeatIndex + uint16(1);
+        bank0Occupied = true;
     end
 end
 
-if flushPending && ~startedFlushThisCycle
-    if sumFlushCount == uint8(0)
-        captureInvRms = true;
-        flushPending = false;
-        nextTokenReady = true;
+if pendingInvRms
+    if pendingBank
+        bank1Occupied = true;
     else
-        sumFlushCount = sumFlushCount - uint8(1);
+        bank0Occupied = true;
     end
 end
+
+if readyTokenValid
+    if readyBank
+        bank1Occupied = true;
+    else
+        bank0Occupied = true;
+    end
 end
 
-function [outputTokenIndex, prefetchTokenIndex, requestBeatIndex, receiveBeatIndex, outputBeatIndex, loadingActive, flushPending, nextTokenReady, outputBank, fillBank] = ...
-    iRotateTokens(outputTokenIndex, prefetchTokenIndex, requestBeatIndex, receiveBeatIndex, outputBeatIndex, loadingActive, flushPending, nextTokenReady, outputBank, fillBank, numTokens)
-
-oldOutputBank = outputBank;
-outputBank = fillBank;
-fillBank = oldOutputBank;
-outputTokenIndex = outputTokenIndex + uint8(1);
-outputBeatIndex = uint16(0);
-requestBeatIndex = uint16(0);
-receiveBeatIndex = uint16(0);
-flushPending = false;
-nextTokenReady = false;
-
-if outputTokenIndex < numTokens - uint8(1)
-    prefetchTokenIndex = outputTokenIndex + uint8(1);
-    loadingActive = true;
+if ~bank0Occupied
+    canStartLoad = true;
+    freeBank = false;
+elseif ~bank1Occupied
+    canStartLoad = true;
+    freeBank = true;
 else
-    prefetchTokenIndex = outputTokenIndex;
-    loadingActive = false;
+    canStartLoad = false;
+    freeBank = false;
 end
 end
