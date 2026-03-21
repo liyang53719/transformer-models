@@ -10,6 +10,8 @@ module tb_rope_fsdb;
   localparam int BEATS_PER_HEAD = 16;
   localparam int BEATS_PER_TOKEN = NUM_HEADS * BEATS_PER_HEAD;
   localparam int EXPECTED_BEATS = NUM_TOKENS * BEATS_PER_TOKEN;
+  localparam int OVERSAMPLE = 42;
+  localparam int MAX_SIM_CYCLES = EXPECTED_BEATS * (OVERSAMPLE + 8);
 
   reg clk = 1'b0;
   reg reset = 1'b1;
@@ -25,11 +27,15 @@ module tb_rope_fsdb;
   wire outValid;
   wire busy;
   wire done;
+  wire slow_enb;
 
   integer sim_cycle_count = 0;
   integer busy_cycle_count = 0;
   integer out_valid_cycle_count = 0;
   integer out_count = 0;
+  reg prev_outValid = 1'b0;
+  reg [255:0] prev_outBeat = 256'h0;
+  reg beatValid = 1'b0;
 
   DUTPacked dut (
     .clk(clk),
@@ -46,6 +52,8 @@ module tb_rope_fsdb;
     .busy(busy),
     .done(done)
   );
+
+  assign slow_enb = dut.u_DUTPacked_tc.enb_1_42_1;
 
   initial begin
     $fsdbDumpfile(fsdb_path);
@@ -101,12 +109,26 @@ module tb_rope_fsdb;
     end
   endtask
 
+  task automatic wait_for_slow_cycle;
+    begin
+      while (1'b1) begin
+        @(posedge clk);
+        if (slow_enb === 1'b1) begin
+          break;
+        end
+      end
+    end
+  endtask
+
   always @(posedge clk) begin
     if (reset) begin
       sim_cycle_count <= 0;
       busy_cycle_count <= 0;
       out_valid_cycle_count <= 0;
       out_count <= 0;
+      prev_outValid <= 1'b0;
+      prev_outBeat <= 256'h0;
+      beatValid <= 1'b0;
     end else begin
       sim_cycle_count <= sim_cycle_count + 1;
       if (busy) begin
@@ -114,8 +136,19 @@ module tb_rope_fsdb;
       end
       if (outValid) begin
         out_valid_cycle_count <= out_valid_cycle_count + 1;
+      end
+      beatValid <= outValid && (!prev_outValid || (outBeat !== prev_outBeat));
+      if (outValid && (!prev_outValid || (outBeat !== prev_outBeat))) begin
         out_count <= out_count + 1;
       end
+      prev_outValid <= outValid;
+      prev_outBeat <= outBeat;
+    end
+  end
+
+  always @(posedge clk) begin
+    if (!reset && sim_cycle_count >= MAX_SIM_CYCLES) begin
+      $fatal(1, "Timed out after %0d cycles waiting for %0d output beats", sim_cycle_count, EXPECTED_BEATS);
     end
   end
 
@@ -125,15 +158,20 @@ module tb_rope_fsdb;
     clear_inputs();
     repeat (4) @(negedge clk);
     reset = 1'b0;
-
-    for (beat_idx = 0; beat_idx < EXPECTED_BEATS; beat_idx = beat_idx + 1) begin
-      @(negedge clk);
-      start = (beat_idx == 0);
-      drive_beat(beat_idx);
-    end
-
+    wait_for_slow_cycle();
+    @(negedge clk);
+    start = 1'b1;
+    clear_inputs();
+    wait_for_slow_cycle();
     @(negedge clk);
     start = 1'b0;
+
+    for (beat_idx = 0; beat_idx < EXPECTED_BEATS; beat_idx = beat_idx + 1) begin
+      drive_beat(beat_idx);
+      wait_for_slow_cycle();
+      @(negedge clk);
+    end
+
     clear_inputs();
 
     wait(done === 1'b1);

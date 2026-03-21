@@ -72,6 +72,8 @@ end
 function iBuildStreamingDutSubsystem(subsystem)
 iDeleteSubsystemContents(subsystem);
 
+controlLatency = '0';
+
 add_block('simulink/Ports & Subsystems/In1', [subsystem '/start'], 'Position', [25 63 55 77], 'SampleTime', '1', 'OutDataTypeStr', 'boolean');
 add_block('simulink/Ports & Subsystems/In1', [subsystem '/cfgNumTokens'], 'Position', [25 98 55 112], 'Port', '2', 'SampleTime', '1', 'OutDataTypeStr', 'uint16');
 add_block('simulink/Ports & Subsystems/In1', [subsystem '/cfgNumHeads'], 'Position', [25 133 55 147], 'Port', '3', 'SampleTime', '1', 'OutDataTypeStr', 'uint8');
@@ -87,6 +89,10 @@ chart.Script = iBuildRopeCoreScript();
 
 add_block('simulink/Signal Attributes/Signal Specification', [subsystem '/BeatSpec'], ...
     'Dimensions', '[1 8]', 'OutDataTypeStr', 'single', 'Position', [455 93 510 117]);
+add_block('simulink/Discrete/Integer Delay', [subsystem '/OutValidDelay'], ...
+    'Position', [455 133 510 157], 'NumDelays', controlLatency, 'vinit', '0');
+add_block('simulink/Discrete/Integer Delay', [subsystem '/DoneDelay'], ...
+    'Position', [455 213 510 237], 'NumDelays', controlLatency, 'vinit', '0');
 add_block('simulink/Ports & Subsystems/Out1', [subsystem '/outBeat'], 'Position', [545 98 575 112]);
 add_block('simulink/Ports & Subsystems/Out1', [subsystem '/outValid'], 'Position', [545 138 575 152], 'Port', '2');
 add_block('simulink/Ports & Subsystems/Out1', [subsystem '/busy'], 'Position', [545 178 575 192], 'Port', '3');
@@ -99,9 +105,11 @@ add_line(subsystem, 'inBeat/1', 'RopeCore/4');
 add_line(subsystem, 'inValid/1', 'RopeCore/5');
 add_line(subsystem, 'RopeCore/1', 'BeatSpec/1');
 add_line(subsystem, 'BeatSpec/1', 'outBeat/1');
-add_line(subsystem, 'RopeCore/2', 'outValid/1');
+add_line(subsystem, 'RopeCore/2', 'OutValidDelay/1');
+add_line(subsystem, 'OutValidDelay/1', 'outValid/1');
 add_line(subsystem, 'RopeCore/3', 'busy/1');
-add_line(subsystem, 'RopeCore/4', 'done/1');
+add_line(subsystem, 'RopeCore/4', 'DoneDelay/1');
+add_line(subsystem, 'DoneDelay/1', 'done/1');
 end
 
 function iBuildPackedDutSubsystem(modelName)
@@ -234,7 +242,7 @@ end
 
 function scriptText = iBuildRopeCoreScript()
 thisDir = fileparts(mfilename('fullpath'));
-sourcePath = fullfile(thisDir, '..', '..', '..', '+transformer_impl', '+layer', '+rope', 'streamingRope.m');
+sourcePath = fullfile(thisDir, '..', '..', '..', '+transformer_impl', '+layer', '+rope', 'streamingRopeSimulink.m');
 scriptText = fileread(sourcePath);
 end
 
@@ -256,6 +264,7 @@ end
 function scriptText = iBuildPackedBeatPackScript()
 scriptText = strjoin({ ...
     'function packedBeat = Pack(words)', ...
+    'packedBeat = fi(0, 0, 256, 0);', ...
     'packedBeat = bitconcat(words(8), words(7), words(6), words(5), words(4), words(3), words(2), words(1));', ...
     'end'}, newline);
 end

@@ -26,20 +26,24 @@ assignin('base', 'ropeNumHeadsSeq', timeseries(uint8([2; 2]), [0; 1]));
 assignin('base', 'ropeInValidSeq', timeseries([false; false], [0; 1]));
 assignin('base', 'ropeInBeatSeq', timeseries(zeros(2, 8, 'single'), [0; 1]));
 
-ensureRopeModel();
+ensureRopeModel(true);
+
+fpCfg = hdlcoder.createFloatingPointTargetConfig('NativeFloatingPoint');
 
 hdlset_param('rope', 'TargetLanguage', 'SystemVerilog');
 hdlset_param('rope', 'ScalarizePorts', 'off');
 hdlset_param('rope', 'UseFloatingPoint', 'on');
 hdlset_param('rope', 'TreatRealsInGeneratedCodeAs', 'None');
-hdlset_param('rope', 'ClockRatePipelining', 'off');
-hdlset_param('rope', 'DistributedPipelining', 'off');
-hdlset_param('rope', 'AdaptivePipelining', 'off');
-hdlset_param('rope', 'BalanceDelays', 'off');
+hdlset_param('rope', 'BalanceDelays', 'on');
+hdlset_param('rope', 'AllowDelayDistribution', 'on');
+hdlset_param('rope', 'PipelineDistributionPriority', 'Performance');
+hdlset_param('rope', 'ClockRatePipelining', 'on');
+hdlset_param('rope', 'ClockRatePipelineOutputPorts', 'on');
+hdlset_param('rope', 'BalanceClockRateOutputPorts', 'on');
+hdlset_param('rope', 'Oversampling', 42);
 hdlset_param('rope', 'GenerateModel', 'off');
 hdlset_param('rope', 'HDLGenerateWebview', 'off');
-hdlset_param('rope', 'FloatingPointTargetConfiguration', ...
-    hdlcoder.createFloatingPointTargetConfig('NativeFloatingPoint'));
+hdlset_param('rope', 'FloatingPointTargetConfiguration', fpCfg);
 
 makehdl('rope', ...
     'HDLSubsystem', 'rope/DUTPacked', ...
