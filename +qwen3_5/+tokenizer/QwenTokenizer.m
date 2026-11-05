@@ -35,11 +35,11 @@ classdef QwenTokenizer < handle
         end
         function text = decode(obj, tokens)
             %DECODE - Convert zero-based token IDs to text
-            %   TEXT = DECODE(OBJ,TOKENS) preserves special token spellings.
+            %   TEXT = DECODE(OBJ,TOKENS) skips special token spellings.
             %
             %   See also encode, qwen3_5.generate
             ids = py.list(num2cell(int64(tokens(:).')));
-            text = string(obj.Backend.decode(ids, pyargs('skip_special_tokens', false)));
+            text = string(obj.Backend.decode(ids, pyargs('skip_special_tokens', true)));
         end
     end
 end

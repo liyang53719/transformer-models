@@ -1,4 +1,8 @@
-# Qwen3.5-0.8B MATLAB FP32 数值比对
+# 历史记录：Qwen3.5-0.8B MATLAB / llama.cpp FP32 数值比对
+
+此页保留先前版本的实测记录。当前入口已切换至 Transformers/PyTorch，
+以[当前数值报告](./qwen3_5_transformers_comparison_20261105.md)为准。
+以下旧流程对应 Git 提交 `1375564`，不再作为当前运行入口。
 
 日期：2026-11-05。实现位于 `+qwen3_5/`；范围为完整的 24 层文本 decoder。
 

@@ -1,7 +1,7 @@
 function Y = l2Normalization(X, epsilon)
 %l2Normalization - Normalize Gated DeltaNet queries and keys
 %   Y = l2Normalization(X,EPSILON) normalizes the first dimension using
-%   the RMSNorm and scale order used by the llama.cpp Qwen3.5 graph.
+%   RMSNorm followed by dimension scaling.
 %
 %   See also qwen3_5.layer.rmsNormalization, qwen3_5.layer.gatedDeltaNet
 

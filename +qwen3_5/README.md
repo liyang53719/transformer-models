@@ -1,155 +1,124 @@
-# Qwen3.5-0.8B FP32 text decoder
+# Qwen3.5-0.8B MATLAB FP32
 
-This package follows the repository's `+qwen2` organization: `load`, `model`,
-`generate`, `+tokenizer`, and explicit operators in `+layer`.
+This package implements all 24 text-decoder layers: 18 Gated DeltaNet layers
+and 6 gated full-attention layers. It reads local BF16/F32 safetensors into
+FP32 MATLAB arrays and supports prefill, cached decode, and greedy generation.
+Vision and MTP are outside the MATLAB implementation's scope.
 
-The implementation runs all 24 text-decoder layers: 18 Gated DeltaNet layers
-and 6 gated full-attention layers. It supports one text sequence, full or
-chunked prefill, and cached autoregressive decoding. Vision and MTP are outside
-this package's scope.
+## Run the summary example directly
 
-## Local weights and precision
+Place the original checkpoint files in `work/models/Qwen3.5-0.8B-FULL/`, then
+run this script in MATLAB:
 
-`qwen3_5.load` reads the original local safetensors directly in MATLAB.
-BF16 values expand exactly to `single`; F32 values remain `single`.
-There is no quantized matrix multiplication, activation quantization, or
-Python inference in the MATLAB forward pass. This is FP32 evaluation of the
-original checkpoint, rather than simulation of BF16 activation rounding.
+```matlab
+TestQwen3_5Summarize
+```
 
-The loader creates `Parameters.Hyperparameters` and `Parameters.Weights.h0`
-through `h23`, matching the existing model packages. Embeddings are stored
-as hidden-by-vocabulary, linear weights as output-by-input. The output head
-shares the token embedding weights.
+The configuration at the top of the script includes:
 
-Checkpoint RMSNorm weights use the Qwen `1 + weight` convention. The loader
-adds this offset to decoder, Q/K, and final normalization weights once.
-Gated DeltaNet's `linear_attn.norm.weight` is already multiplicative and is
-loaded without an offset. `A_log` becomes `-exp(A_log)` once.
+```matlab
+allowDownload = false;
+setupPython = true;
+forceReload = false;
+promptTemplate = "Summarize this: %s Summary:";
+useChatTemplate = false;
+maxNewTokens = 30;
+```
 
-## MATLAB use
+By default the script loads existing local weights. If any required model file
+is missing, it reports the missing files and does not download weights.
+Set `allowDownload = true` explicitly to permit downloading the configured
+Hugging Face model. All example data paths are relative to this repository.
 
-Run from the repository root. Place the local checkpoint files in the ignored
-`work/models/Qwen3.5-0.8B-FULL/` directory:
+The first run prepares Python dependencies under the ignored
+`work/deps/qwen3_5_python/` directory. This project environment uses
+Transformers 5.3.0 and PyTorch; it does not upgrade the Python environment used
+by the other model examples. Set `setupPython = false` to disable package setup.
+
+The script follows `TestQwen2Summarize.m`: it displays a MATLAB summary,
+an independent Transformers/PyTorch FP32 summary, and both generation times.
+Both paths receive the same prompt, use greedy decoding, and stop at EOS or
+the configured token limit. Special tokens are omitted from displayed text.
+The script checks exact input-ID, generated-ID, and text equality.
+
+The variables `mdl`, `summary_matlab`, `summary_python`, `t_matlab`, `t_python`,
+`inputIds`, `matlabIds`, `pythonIds`, and `comparison` remain in the workspace.
+The model is reused on subsequent runs when its checkpoint signature matches.
+Use `forceReload = true` to reload it. `mdl.Tokenizer` also provides `encode`
+and `decode` for use with `generateSummary_Qwen3_5`.
+
+Set `useChatTemplate = true` for a Qwen3.5 chat prompt with thinking disabled.
+The default plain prompt matches the existing Qwen2 example's format.
+Generation times exclude model loading, tokenization, and text decoding.
+These elapsed times describe the current run.
+
+Results and request/response JSON files are saved in
+`work/tmp/qwen3_5_transformers/summarize/`.
+
+## MATLAB interfaces and operators
 
 ```matlab
 modelFolder = fullfile('work', 'models', 'Qwen3.5-0.8B-FULL');
 parameters = qwen3_5.load(modelFolder);
 [logits, state] = qwen3_5.model(int32([760 6511 314 9338 369]), parameters);
 [~, next] = max(logits(:, end));
-[nextLogits, state] = qwen3_5.model(int32(next-1), parameters, state);
+[logits, state] = qwen3_5.model(int32(next-1), parameters, state);
 ```
 
-Token IDs are zero based. The first dimension of logits is the 248320-token
-vocabulary. Passing an empty state starts a new sequence. State contains both
-the Gated DeltaNet convolution/SSM state and the full-attention KV cache.
-Only base MATLAB is required for loading weights and evaluating token IDs.
-
-For text, the optional tokenizer uses Python's `tokenizers` package to read
-the local tokenizer JSON, following the existing Python-tokenizer pattern:
-
-```matlab
-mdl.Parameters = parameters;
-mdl.Tokenizer = qwen3_5.tokenizer.QwenTokenizer(modelFolder);
-[text, ids] = generateSummary_Qwen3_5(mdl, 'The capital of France is', ...
-    'TopK', 1, 'MaxNewTokens', 8);
-```
-
-The generation interface uses greedy decoding. Provide a formatted chat prompt
-when chat-template behavior is needed. Raw text is not automatically wrapped
-in a chat template.
-
-## Side-by-side summary example
-
-After preparing the reference below, run the repository-root script
-`TestQwen3_5Summarize` in MATLAB. Its configuration section contains the input
-text, prompt template, relative model/reference paths, and `maxNewTokens = 30`.
-The default uses a Qwen3.5 chat prompt with thinking disabled for the summary.
-It follows `TestQwen2Summarize.m`: generate a MATLAB summary, launch an
-independent reference through Python, and print both texts and generation times.
-The reference backend is llama.cpp, using the requested FP32 settings.
-The script asserts exact input-token, generated-token, and text equality and
-saves `work/tmp/qwen3_5/summarize/matlab_summary_comparison.json`.
-
-The summary runner keeps intermediate tensor dumps disabled and stops at EOS
-or the configured token limit. Its elapsed times exclude model loading;
-MATLAB's text entry also includes tokenization and decoding. MATLAB runtime
-library paths are removed only from the native reference child's environment.
-The separate `TestQwen3_5Numerics` entry retains the full tensor comparison.
-
-## Explicit operators
+Token IDs are zero based, and logits are vocabulary-by-time. An empty state
+starts a new sequence. `qwen3_5.generate` runs greedy decoding, and
+`generateSummary_Qwen3_5` accepts the repository's `Parameters`/`Tokenizer`
+model structure. Weight loading and token-ID inference use base MATLAB.
 
 | Operator | Behavior |
 |---|---|
-| `rmsNormalization` | FP32 squares, wide reduction matching llama.cpp CPU, FP32 scaling |
+| `rmsNormalization` | First-dimension RMSNorm with FP32 squares and a wide reduction |
 | `l2Normalization` | GDN query/key normalization with epsilon inside the squared norm |
-| `causalDepthwiseConv` | Four taps, oldest first, with three samples of retained history |
-| `gatedDeltaNet` | Decay, delta correction, rank-one state update, query scaling |
-| `linearAttention` | QKV/Z/A/B projections, convolution, GDN, gated RMSNorm, output projection |
-| `rotaryEmbedding` | Text MRoPE positions; rotates 64 of 256 head channels, theta 1e7 |
-| `fullAttention` | Per-head interleaved Q/gate split, Q/K norm, causal GQA, sigmoid gate |
-| `gatedMLP` | SiLU gate multiplied by the up projection, then down projection |
-| `block` | Attention and MLP with their two residual connections |
+| `causalDepthwiseConv` | Four causal taps and three samples of history |
+| `gatedDeltaNet` | Decay, delta correction, state update, and query scaling |
+| `linearAttention` | QKV/Z/A/B projections, convolution, GDN, gated norm, output projection |
+| `rotaryEmbedding` | Text positions; rotates 64 of 256 head channels with theta 1e7 |
+| `fullAttention` | Q/gate split, Q/K norm, causal GQA, and sigmoid output gate |
+| `gatedMLP` | SiLU-gated up projection followed by down projection |
+| `block` | Attention, MLP, and both residual connections |
 
-GDN state is stored as key-dimension-by-value-dimension-by-head. For each
-token, the implementation first decays the state, predicts the value from
-the current key, applies the beta-weighted correction, and reads the updated
-state with the normalized query. The query factor `1/sqrt(128)` is applied
-once. A chunk boundary preserves both convolution history and recurrent state.
+The loader converts checkpoint RMSNorm offset weights to `1 + weight` once,
+except for GDN's already multiplicative norm. `A_log` becomes `-exp(A_log)`.
+The output head shares the token embedding weights. State preserves GDN
+convolution/SSM history and the full-attention KV cache. Stop IDs include
+the chat EOS declared by tokenizer metadata.
 
-Generation reads its stop IDs from the model, optional generation config,
-and tokenizer metadata. This includes the tokenizer's chat EOS token, so
-`<|im_end|>` ends a chat response without generating further turns.
+## Numerical comparison against Transformers/PyTorch
 
-## Python preparation and numerical comparison
-
-The existing `tools/prepare_tinyllama.py` exports intermediate tensors,
-logits, and greedy tokens. `tools/prepare_qwen3_5.py` provides the same workflow
-with llama.cpp as the reference:
+Run the local-only preparation and full numerical comparison:
 
 ```bash
-python tools/prepare_qwen3_5.py \
-  --model work/models/Qwen3.5-0.8B-FULL \
-  --llama-cpp work/deps/llama.cpp \
-  --llama-revision 183d2a04c2a666187598abb771918cfbb40dcebb
+python tools/prepare_qwen3_5.py
 ```
 
-The script archives the selected committed llama.cpp sources into the ignored
-`work/tmp/qwen3_5/` directory, builds a CPU library and the small reference
-driver, and uses the unmodified converter with `--outtype f32 --no-nextn`.
-It verifies that every exported GGUF tensor is F32. Existing source-model
-files and the source llama.cpp checkout are not changed. The input model and
-llama.cpp checkout directories are ignored by Git; all relative command-line
-paths resolve from this repository root.
+The default model path is `work/models/Qwen3.5-0.8B-FULL/`. No model download is
+attempted unless `--allow-download` is supplied. Add `--setup-only` to check
+the local model and prepare Python without running numerical cases.
 
-Reference settings are F32 weights, F32 KV cache, F32 recurrent state, CPU,
-and flash attention disabled. Python and llama.cpp prompt token IDs must agree.
-MATLAB independently loads the source safetensors and executes its own operators.
+`tools/qwen3_5_transformers.py` executes the official Transformers model on CPU
+with FP32 parameters and eager attention. It exports reference layer outputs,
+normalizations, attention/MLP outputs, recurrent state, convolution history,
+KV caches, and every vocabulary logit. MATLAB independently runs its operators.
 
-Five cases cover a single token, the existing photosynthesis-summary input,
-a Chinese chat prompt, the same Chinese prompt with seven-token prefill chunks,
-and a longer prefill. Every case runs all 24 layers and cached decode steps.
-Comparison includes convolution history, GDN state, operator outputs, all layer
-outputs, and every vocabulary logit at every evaluated position. The fixed
-elementwise bound is `1e-3 + 1e-4 * abs(reference)`, with finite values and
-identical top-1 IDs required. Generated IDs and decoded text are also recorded.
+Five cases cover one token, English, Chinese, MATLAB chunked prefill, and a
+241-token prefill, each followed by cached decode. For the chunked case, MATLAB
+receives seven-token chunks and is compared with the full-prefill PyTorch
+reference. Each element must satisfy `1e-3 + 1e-4 * abs(reference)`, with finite
+values and exact top-1/generated-ID agreement required.
 
-Outputs include `provenance.json`, `summary.json`, per-case
-`matlab_comparison.json`, generated text, binary tensors, and execution logs.
-Generated tensors and model weights stay in the ignored work directory.
-
-To prepare references without starting MATLAB, add `--prepare-only`. To replay
-existing references in MATLAB:
+To replay existing references:
 
 ```matlab
-reports = TestQwen3_5Numerics(modelFolder, 'work/tmp/qwen3_5/references');
+TestQwen3_5Numerics( ...
+    fullfile('work', 'models', 'Qwen3.5-0.8B-FULL'), ...
+    fullfile('work', 'tmp', 'qwen3_5_transformers', 'references'));
 ```
 
-The entry point also runs seven tests for stop-token metadata, chunked convolution,
-nonzero-state GDN continuation, the RoPE partial prefix, attention cache
-continuation, and causal masking.
-
-The operator definitions were checked against the local model's config and
-the pinned llama.cpp implementation, with the upstream
-[Qwen configuration](https://huggingface.co/Qwen/Qwen3.5-0.8B/blob/main/config.json)
-and [llama.cpp model source](https://github.com/ggml-org/llama.cpp/blob/183d2a04c2a666187598abb771918cfbb40dcebb/src/models/qwen35.cpp)
-as references. Simulink and HDL flows are unchanged.
+See the [measured comparison report](../doc/qwen3_5_transformers_comparison_20261105.md).
+The reference implementation is documented by
+[Hugging Face](https://huggingface.co/docs/transformers/model_doc/qwen3_5).
