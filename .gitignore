@@ -1,4 +1,5 @@
 *.asv
+__pycache__/
 gpt2-355M
 **/slprj/
 *.slxc
@@ -25,6 +26,8 @@ transformer_simulink/layer/rmsnorm/*.mat
 /work/logs/
 /work/simulink/
 /work/tmp/
+/work/models/
+/work/deps/
 /work/vcs_rmsnorm_fsdb/
 /work/hdl/matlab_rmsNormalization/
 /work/hdl/matlab_rmsNormalization_probe/

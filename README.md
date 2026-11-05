@@ -1,8 +1,21 @@
 # Transformer Models for MATLAB
-[![CircleCI](https://img.shields.io/circleci/build/github/matlab-deep-learning/transformer-models?label=tests)](https://app.circleci.com/pipelines/github/matlab-deep-learning/transformer-models)
-[![Open in MATLAB Online](https://www.mathworks.com/images/responsive/global/open-in-matlab-online.svg)](https://matlab.mathworks.com/open/github/v1?repo=matlab-deep-learning/transformer-models)
+[![Upstream CircleCI](https://img.shields.io/circleci/build/github/matlab-deep-learning/transformer-models?label=upstream%20tests)](https://app.circleci.com/pipelines/github/matlab-deep-learning/transformer-models)
+[![Open in MATLAB Online](https://www.mathworks.com/images/responsive/global/open-in-matlab-online.svg)](https://matlab.mathworks.com/open/github/v1?repo=liyang53719/transformer-models)
 
-This repository implements deep learning transformer models in MATLAB.
+This fork of [matlab-deep-learning/transformer-models](https://github.com/matlab-deep-learning/transformer-models) implements transformer inference in MATLAB. It retains BERT, FinBERT, and GPT-2 and adds TinyLlama, Qwen2/Qwen2.5, quantized Qwen2 inference, and an FP32 Qwen3.5-0.8B text decoder with numerical comparisons against llama.cpp.
+
+## Models and entry points
+
+| Model | MATLAB entry points | Examples and validation |
+|---|---|---|
+| BERT / FinBERT | `bert`, `bert.model`, `finbert`, `finbert.sentimentModel` | Classification, fine-tuning, and masked-token examples below |
+| GPT-2 | `gpt2`, `generateSummary` | [GPT-2 summary example](./SummarizeTextUsingTransformersExample.m) |
+| TinyLlama | `llama.load`, `llama.model`, `generateSummary_tinyllama` | [MATLAB/Python comparison](./TestTinyLlamaSummarize.m), [Python preparation](./tools/prepare_tinyllama.py) |
+| Qwen2 / Qwen2.5 | `qwen2.load`, `qwen2.model`, `generateSummary_Qwen2` | [MATLAB/Python comparison](./TestQwen2Summarize.m) |
+| Qwen2 quantized | `qwen2_quant.load_gguf`, `qwen2_quant.load_hf_quant`, `generateSummary_Qwen2_quant` | [GGUF test](./TestQwen2QuantSummarize.m), [GPTQ test](./TestQwen2GPTQQuantSummarize.m), [AWQ test](./TestQwen2AWQQuantSummarize.m), [delivery notes](./QWEN2_QUANT_DELIVERY_20260314.md) |
+| Qwen3.5-0.8B FP32 | `qwen3_5.load`, `qwen3_5.model`, `generateSummary_Qwen3_5` | [Package guide](./+qwen3_5/README.md), [Python preparation](./tools/prepare_qwen3_5.py), [numerical comparison](./TestQwen3_5Numerics.m) |
+
+Current development focuses on MATLAB inference and numerical validation. Existing Simulink/HDL research assets are retained; those workflows are not currently maintained.
 
 ## Translations
 * [日本語](./README_JP.md)
@@ -16,8 +29,53 @@ This repository implements deep learning transformer models in MATLAB.
 - MATLAB R2020a or later
 - Deep Learning Toolbox
 
+### Qwen3.5-0.8B FP32
+
+- MATLAB R2024a was used for validation. Loading weights and evaluating token IDs uses base MATLAB.
+- Python with `tokenizers` is needed for the optional text tokenizer.
+- The llama.cpp reference workflow also needs Python with `torch`, `numpy`, and `safetensors`, the converter dependencies from the selected llama.cpp checkout, CMake, and a C++17 compiler.
+- A local copy of the original Qwen3.5-0.8B checkpoint is required. BF16/F32 checkpoint weights are evaluated through FP32 operators.
+
+TinyLlama, Qwen2, and quantized Qwen2 have their Python preparation/runtime dependencies documented in their linked scripts and delivery notes.
+
 ## Getting Started
 Download or [clone](https://www.mathworks.com/help/matlab/matlab_prog/use-source-control-with-projects.html#mw_4cc18625-9e78-4586-9cc4-66e191ae1c2c) this repository to your machine and open it in MATLAB. 
+
+## Qwen3.5-0.8B quick start
+
+Run the following examples from the repository root. Place the checkpoint's `config.json`, `tokenizer.json`, safetensors index, and weight shards in `work/models/Qwen3.5-0.8B-FULL/`. Place a llama.cpp Git checkout in `work/deps/llama.cpp/` for reference preparation. Both directories are ignored by Git.
+
+```matlab
+modelFolder = fullfile('work', 'models', 'Qwen3.5-0.8B-FULL');
+mdl.Parameters = qwen3_5.load(modelFolder);
+mdl.Tokenizer = qwen3_5.tokenizer.QwenTokenizer(modelFolder);
+[text, ids] = generateSummary_Qwen3_5(mdl, 'The capital of France is', ...
+    'TopK', 1, 'MaxNewTokens', 8);
+disp(text)
+```
+
+The implementation executes all 24 text-decoder layers: 18 Gated DeltaNet and 6 gated full-attention layers. It includes causal convolution, RMSNorm, partial RoPE, dense MLP, convolution/SSM state, and FP32 KV cache. Token IDs are zero based. Generation uses greedy decoding; supply a formatted chat prompt when needed. The scope is text inference, without the vision encoder or MTP.
+
+To reproduce the llama.cpp comparison:
+
+```bash
+python tools/prepare_qwen3_5.py \
+  --model work/models/Qwen3.5-0.8B-FULL \
+  --llama-cpp work/deps/llama.cpp \
+  --llama-revision 183d2a04c2a666187598abb771918cfbb40dcebb
+```
+
+The Python entry point follows the existing TinyLlama preparation workflow: export intermediate tensors, logits, and greedy token IDs, then run the independent MATLAB implementation. Reference weights, KV cache, and recurrent state are FP32. Relative command-line paths resolve from this repository root. Logs and generated artifacts are stored in the ignored `work/tmp/qwen3_5/` directory.
+
+The [2026-11-05 numerical report](./doc/qwen3_5_fp32_comparison_20261105.md) records five passing cases: single-token input, English summary, Chinese chat, chunked prefill, and a 241-token prefill. Across 13,884 tensor comparisons, top-1 IDs matched at all 347 evaluated positions; maximum logits absolute error was `5.77e-5`. Five operator tests passed, and all 18 new MATLAB files had no Code Analyzer diagnostics.
+
+To replay prepared references in MATLAB:
+
+```matlab
+TestQwen3_5Numerics( ...
+    fullfile('work', 'models', 'Qwen3.5-0.8B-FULL'), ...
+    fullfile('work', 'tmp', 'qwen3_5', 'references'));
+```
 
 ## Functions
 ### bert
@@ -58,6 +116,11 @@ Download or [clone](https://www.mathworks.com/help/matlab/matlab_prog/use-source
 
 ### gpt2
 `mdl = gpt2` loads a pretrained GPT-2 transformer model and if necessary, downloads the model weights.
+
+### Qwen3.5-0.8B (FP32 text decoder)
+`parameters = qwen3_5.load(modelFolder)` reads local BF16/F32 safetensors into FP32 MATLAB arrays. `qwen3_5.model` implements all 24 text-decoder layers, including Gated DeltaNet, gated GQA, and cached decoding. Text generation is available through `generateSummary_Qwen3_5`.
+
+See the [Qwen3.5 package guide](./+qwen3_5/README.md) for usage and the Python preparation workflow, and the [FP32 numerical comparison report](./doc/qwen3_5_fp32_comparison_20261105.md) for MATLAB/llama.cpp results. This path covers text inference; the vision encoder and MTP are outside its scope.
 
 ### generateSummary
 `summary = generateSummary(mdl,text)` generates a summary of the string or `char` array `text` using the transformer model `mdl`. The output summary is a char array.
