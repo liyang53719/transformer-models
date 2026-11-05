@@ -74,7 +74,9 @@ The Python entry point exports FP32 intermediate tensors, logits, and greedy tok
 
 The [summary comparison script](./TestQwen3_5Summarize.m) follows `TestQwen2Summarize.m`: independent MATLAB and Transformers/PyTorch greedy generation, up to 30 new tokens, both summaries and times, and exact input-ID/generated-ID/text checks. Python runs in a subprocess using the local checkpoint; MATLAB's Python session does not need to be reconfigured. Displayed times exclude weight loading, tokenization, and text decoding.
 
-The [2026-11-05 Transformers/PyTorch report](./doc/qwen3_5_transformers_comparison_20261105.md) records five passing cases: single-token input, English summary, Chinese chat, MATLAB chunked prefill, and a 241-token prefill. Across 6,290 tensor comparisons, top-1 IDs matched at all 347 evaluated positions; maximum logits absolute error was `4.84e-5`. The current operator test suite has seven passing tests, including stop-token metadata coverage.
+The [2026-11-05 Transformers/PyTorch report](./doc/qwen3_5_transformers_comparison_20261105.md) records five passing cases: single-token input, English summary, Chinese chat, MATLAB chunked prefill, and a 241-token prefill. Across 6,290 tensor comparisons, top-1 IDs matched at all 347 evaluated positions; maximum logits absolute error was `4.86e-5`. The current operator test suite has 16 passing tests, including chunk-wise GDN and stop-token metadata coverage.
+
+GDN uses 64-token chunk-wise matrix evaluation for prefill inputs of at least 16 tokens, with recurrence for shorter inputs and single-token decode. The [GDN measurements](./doc/qwen3_5_chunkwise_gdn_20261105.md) show a 1024-token first-layer GDN-core time of 29.0 ms versus 106.4 ms for recurrence on the validated CPU setup; model-level numerical comparisons remain passing.
 
 To replay prepared references in MATLAB:
 

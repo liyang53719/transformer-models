@@ -1,4 +1,8 @@
 classdef qwen3_5OperatorsTest < matlab.unittest.TestCase
+    properties (TestParameter)
+        GdnLength = struct('one', 1, 'partial', 17, 'boundary', 64, ...
+            'tail', 65, 'multiple', 129);
+    end
     methods (TestClassSetup)
         function addSourcePath(test)
             repoRoot = fileparts(fileparts(fileparts(mfilename('fullpath'))));
@@ -12,6 +16,49 @@ classdef qwen3_5OperatorsTest < matlab.unittest.TestCase
         end
     end
     methods (Test)
+        function linearAttentionChunkwiseMatchesRecurrent(test)
+            [x, w, hp] = iSmallLinearAttention();
+            hp.GdnImplementation = 'recurrent';
+            [expected, expectedState] = qwen3_5.layer.linearAttention(x, [], w, hp);
+            hp.GdnImplementation = 'chunkwise';
+            [actual, actualState] = qwen3_5.layer.linearAttention(x, [], w, hp);
+            test.verifyEqual(actual, expected, 'AbsTol', single(2e-5), 'RelTol', single(2e-5));
+            test.verifyEqual(actualState.SSM, expectedState.SSM, 'AbsTol', single(2e-5), 'RelTol', single(2e-5));
+            test.verifyEqual(actualState.History, expectedState.History, 'AbsTol', single(0));
+        end
+        function chunkwiseDeltaMatchesRecurrent(test, GdnLength)
+            [q, k, v, g, beta, state] = iGdnInputs(GdnLength);
+            [expected, expectedState] = qwen3_5.layer.gatedDeltaNet(q, k, v, g, beta, state);
+            [actual, actualState] = qwen3_5.layer.gatedDeltaNetChunkwise(q, k, v, g, beta, state);
+            test.verifyEqual(actual, expected, 'AbsTol', single(2e-5), 'RelTol', single(2e-5));
+            test.verifyEqual(actualState, expectedState, 'AbsTol', single(2e-5), 'RelTol', single(2e-5));
+            test.verifyClass(actual, 'single');
+            test.verifyClass(actualState, 'single');
+        end
+        function chunkwiseDeltaPreservesStateAcrossCalls(test)
+            [q, k, v, g, beta, state] = iGdnInputs(129);
+            [expected, expectedState] = qwen3_5.layer.gatedDeltaNetChunkwise(q, k, v, g, beta, state);
+            [left, next] = qwen3_5.layer.gatedDeltaNetChunkwise( ...
+                q(:,:,1:17), k(:,:,1:17), v(:,:,1:17), g(:,1:17), beta(:,1:17), state);
+            [right, final] = qwen3_5.layer.gatedDeltaNetChunkwise( ...
+                q(:,:,18:end), k(:,:,18:end), v(:,:,18:end), g(:,18:end), beta(:,18:end), next);
+            test.verifyEqual(cat(3, left, right), expected, 'AbsTol', single(2e-5), 'RelTol', single(2e-5));
+            test.verifyEqual(final, expectedState, 'AbsTol', single(2e-5), 'RelTol', single(2e-5));
+        end
+        function chunkwiseDeltaHandlesStrongDecay(test)
+            [q, k, v, ~, beta, state] = iGdnInputs(65);
+            g = -1000 * ones(2, 65, 'single');
+            [expected, expectedState] = qwen3_5.layer.gatedDeltaNet(q, k, v, g, beta, state);
+            [actual, actualState] = qwen3_5.layer.gatedDeltaNetChunkwise(q, k, v, g, beta, state);
+            test.verifyEqual(actual, expected, 'AbsTol', single(2e-5));
+            test.verifyEqual(actualState, expectedState, 'AbsTol', single(2e-5));
+        end
+        function chunkwiseDeltaZeroBetaKeepsState(test)
+            [q, k, v, ~, ~, state] = iGdnInputs(65);
+            [~, actualState] = qwen3_5.layer.gatedDeltaNetChunkwise( ...
+                q, k, v, zeros(2, 65, 'single'), zeros(2, 65, 'single'), state);
+            test.verifyEqual(actualState, state, 'AbsTol', single(0));
+        end
         function stopTokensIncludeChatTerminator(test)
             folder = tempname;
             mkdir(folder);
@@ -77,6 +124,31 @@ classdef qwen3_5OperatorsTest < matlab.unittest.TestCase
             test.verifyEqual(a(:, 1:3), b(:, 1:3), 'AbsTol', single(1e-6));
         end
     end
+end
+
+function [q, k, v, g, beta, state] = iGdnInputs(tokens)
+q = qwen3_5.layer.l2Normalization(single(randn(8, 2, tokens)), single(1e-6));
+k = qwen3_5.layer.l2Normalization(single(randn(8, 2, tokens)), single(1e-6));
+v = single(randn(12, 2, tokens));
+g = -single(rand(2, tokens)) / 4;
+beta = single(rand(2, tokens));
+state = single(randn(8, 12, 2));
+end
+
+function [x, w, hp] = iSmallLinearAttention()
+x = single(randn(6, 65));
+hp = struct('LinearKeyDim', 8, 'LinearValueDim', 12, ...
+    'LinearKeyHeads', 2, 'LinearValueHeads', 2, ...
+    'RmsNormEpsilon', single(1e-6), 'GdnChunkSize', 32);
+w = struct('linear_attn_in_proj_qkv', single(randn(56, 6))/4, ...
+    'linear_attn_in_proj_z', single(randn(24, 6))/4, ...
+    'linear_attn_in_proj_a', single(randn(2, 6))/4, ...
+    'linear_attn_in_proj_b', single(randn(2, 6))/4, ...
+    'linear_attn_dt_bias', single(randn(2, 1)), ...
+    'linear_attn_A', -ones(2, 1, 'single'), ...
+    'linear_attn_conv1d', single(randn(56, 4))/4, ...
+    'linear_attn_norm', ones(12, 1, 'single'), ...
+    'linear_attn_out_proj', single(randn(6, 24))/4);
 end
 
 function iWriteStopTokenFixture(folder, includeTokenizer)

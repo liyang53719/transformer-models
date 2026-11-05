@@ -76,6 +76,7 @@ model structure. Weight loading and token-ID inference use base MATLAB.
 | `l2Normalization` | GDN query/key normalization with epsilon inside the squared norm |
 | `causalDepthwiseConv` | Four causal taps and three samples of history |
 | `gatedDeltaNet` | Decay, delta correction, state update, and query scaling |
+| `gatedDeltaNetChunkwise` | Unit lower-triangular solve and matrix products within each chunk |
 | `linearAttention` | QKV/Z/A/B projections, convolution, GDN, gated norm, output projection |
 | `rotaryEmbedding` | Text positions; rotates 64 of 256 head channels with theta 1e7 |
 | `fullAttention` | Q/gate split, Q/K norm, causal GQA, and sigmoid output gate |
@@ -87,6 +88,13 @@ except for GDN's already multiplicative norm. `A_log` becomes `-exp(A_log)`.
 The output head shares the token embedding weights. State preserves GDN
 convolution/SSM history and the full-attention KV cache. Stop IDs include
 the chat EOS declared by tokenizer metadata.
+
+GDN defaults to `GdnImplementation = 'auto'` with `GdnChunkSize = 64`.
+Inputs of at least 16 tokens use chunk-wise evaluation; shorter inputs and
+single-token decode retain recurrence. Set `GdnImplementation` to
+`'recurrent'` or `'chunkwise'` to choose the multi-token implementation.
+Both share the same state layout and support nonzero initial state.
+See the [chunk-wise derivation and measurements](../doc/qwen3_5_chunkwise_gdn_20261105.md).
 
 ## Numerical comparison against Transformers/PyTorch
 

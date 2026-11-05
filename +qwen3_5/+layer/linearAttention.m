@@ -32,8 +32,23 @@ k = reshape(convolved(kd*kh+1:2*kd*kh, :), kd, kh, tokens);
 v = reshape(convolved(2*kd*kh+1:end, :), vd, vh, tokens);
 q = qwen3_5.layer.l2Normalization(q, hp.RmsNormEpsilon);
 k = qwen3_5.layer.l2Normalization(k, hp.RmsNormEpsilon);
-[core, cache.SSM] = qwen3_5.layer.gatedDeltaNet( ...
-    q, k, v, logDecay, beta, cache.SSM);
+implementation = 'auto';
+chunkSize = 64;
+if isfield(hp, 'GdnImplementation')
+    implementation = validatestring(hp.GdnImplementation, {'auto', 'recurrent', 'chunkwise'});
+end
+if isfield(hp, 'GdnChunkSize')
+    chunkSize = hp.GdnChunkSize;
+end
+useChunks = tokens > 1 && (strcmp(implementation, 'chunkwise') || ...
+    (strcmp(implementation, 'auto') && tokens >= 16));
+if useChunks
+    [core, cache.SSM] = qwen3_5.layer.gatedDeltaNetChunkwise( ...
+        q, k, v, logDecay, beta, cache.SSM, chunkSize);
+else
+    [core, cache.SSM] = qwen3_5.layer.gatedDeltaNet( ...
+        q, k, v, logDecay, beta, cache.SSM);
+end
 normalized = qwen3_5.layer.rmsNormalization( ...
     core, w.linear_attn_norm, hp.RmsNormEpsilon);
 gated = normalized .* qwen3_5.layer.silu(z);
