@@ -26,11 +26,11 @@ def sha256(path):
     return digest.hexdigest()
 
 
-def run(command, log, cwd=ROOT):
+def run(command, log, cwd=ROOT, env=None):
     command = [str(arg) for arg in command]
     print("RUN", json.dumps(command, ensure_ascii=False), flush=True)
     with Path(log).open("w") as output:
-        result = subprocess.run(command, cwd=cwd, stdout=output,
+        result = subprocess.run(command, cwd=cwd, env=env, stdout=output,
                                 stderr=subprocess.STDOUT, check=False)
     if result.returncode:
         tail = Path(log).read_text(errors="replace").splitlines()[-35:]
@@ -88,8 +88,10 @@ def prepare(args):
 
     index = json.loads((model / "model.safetensors.index.json").read_text())
     shards = sorted(set(index["weight_map"].values()))
+    metadata_files = [name for name in ["tokenizer_config.json", "generation_config.json"]
+                      if (model / name).is_file()]
     inputs = {name: sha256(model / name) for name in
-              ["config.json", "tokenizer.json", *shards]}
+              ["config.json", "tokenizer.json", *metadata_files, *shards]}
     conversion_key = {"inputs": inputs, "llama_revision": revision, "outtype": "f32", "nextn": False}
     key_path = work / "conversion.json"
     gguf_path = work / "Qwen3.5-0.8B-F32.gguf"

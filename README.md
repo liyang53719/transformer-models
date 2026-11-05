@@ -13,7 +13,7 @@ This fork of [matlab-deep-learning/transformer-models](https://github.com/matlab
 | TinyLlama | `llama.load`, `llama.model`, `generateSummary_tinyllama` | [MATLAB/Python comparison](./TestTinyLlamaSummarize.m), [Python preparation](./tools/prepare_tinyllama.py) |
 | Qwen2 / Qwen2.5 | `qwen2.load`, `qwen2.model`, `generateSummary_Qwen2` | [MATLAB/Python comparison](./TestQwen2Summarize.m) |
 | Qwen2 quantized | `qwen2_quant.load_gguf`, `qwen2_quant.load_hf_quant`, `generateSummary_Qwen2_quant` | [GGUF test](./TestQwen2QuantSummarize.m), [GPTQ test](./TestQwen2GPTQQuantSummarize.m), [AWQ test](./TestQwen2AWQQuantSummarize.m), [delivery notes](./QWEN2_QUANT_DELIVERY_20260314.md) |
-| Qwen3.5-0.8B FP32 | `qwen3_5.load`, `qwen3_5.model`, `generateSummary_Qwen3_5` | [Package guide](./+qwen3_5/README.md), [Python preparation](./tools/prepare_qwen3_5.py), [numerical comparison](./TestQwen3_5Numerics.m) |
+| Qwen3.5-0.8B FP32 | `qwen3_5.load`, `qwen3_5.model`, `generateSummary_Qwen3_5` | [Summary comparison](./TestQwen3_5Summarize.m), [package guide](./+qwen3_5/README.md), [Python preparation](./tools/prepare_qwen3_5.py), [numerical comparison](./TestQwen3_5Numerics.m) |
 
 Current development focuses on MATLAB inference and numerical validation. Existing Simulink/HDL research assets are retained; those workflows are not currently maintained.
 
@@ -67,7 +67,9 @@ python tools/prepare_qwen3_5.py \
 
 The Python entry point follows the existing TinyLlama preparation workflow: export intermediate tensors, logits, and greedy token IDs, then run the independent MATLAB implementation. Reference weights, KV cache, and recurrent state are FP32. Relative command-line paths resolve from this repository root. Logs and generated artifacts are stored in the ignored `work/tmp/qwen3_5/` directory.
 
-The [2026-11-05 numerical report](./doc/qwen3_5_fp32_comparison_20261105.md) records five passing cases: single-token input, English summary, Chinese chat, chunked prefill, and a 241-token prefill. Across 13,884 tensor comparisons, top-1 IDs matched at all 347 evaluated positions; maximum logits absolute error was `5.77e-5`. Five operator tests passed, and all 18 new MATLAB files had no Code Analyzer diagnostics.
+For the same side-by-side summary workflow as `TestQwen2Summarize.m`, run [TestQwen3_5Summarize.m](./TestQwen3_5Summarize.m) in MATLAB after reference preparation. It independently generates up to 30 greedy tokens in MATLAB and llama.cpp, prints both summaries and elapsed generation times, and asserts equal input IDs, generated IDs, and text. The reference runs through [qwen3_5_llama_infer.py](./tools/qwen3_5_llama_infer.py); its summary mode skips intermediate tensor dumps. Model loading is excluded from the displayed times; these are elapsed generation times, with MATLAB's text entry also including tokenization and decoding.
+
+The [2026-11-05 numerical report](./doc/qwen3_5_fp32_comparison_20261105.md) records five passing cases: single-token input, English summary, Chinese chat, chunked prefill, and a 241-token prefill. Across 13,884 tensor comparisons, top-1 IDs matched at all 347 evaluated positions; maximum logits absolute error was `5.77e-5`. The initial 18 MATLAB implementation/test files had no Code Analyzer diagnostics. The summary demo additionally passed independent greedy generation through chat EOS, and the current test suite has seven passing tests, including stop-token metadata coverage.
 
 To replay prepared references in MATLAB:
 

@@ -9,12 +9,16 @@ function [tokens, state] = generate(inputTokens, parameters, maxNewTokens)
 %   See also qwen3_5.model, qwen3_5.load
 
 validateattributes(maxNewTokens, {'numeric'}, {'scalar', 'integer', 'positive'});
+stopIds = parameters.Hyperparameters.EosTokenId;
+if isfield(parameters.Hyperparameters, 'EosTokenIds')
+    stopIds = parameters.Hyperparameters.EosTokenIds;
+end
 [logits, state] = qwen3_5.model(inputTokens, parameters);
 tokens = zeros(1, maxNewTokens, 'int32');
 for i = 1:maxNewTokens
     [~, next] = max(logits(:, end));
     tokens(i) = int32(next - 1);
-    if tokens(i) == parameters.Hyperparameters.EosTokenId
+    if any(tokens(i) == stopIds)
         tokens = tokens(1:i);
         return
     end

@@ -12,6 +12,24 @@ classdef qwen3_5OperatorsTest < matlab.unittest.TestCase
         end
     end
     methods (Test)
+        function stopTokensIncludeChatTerminator(test)
+            folder = tempname;
+            mkdir(folder);
+            test.addTeardown(@() rmdir(folder, 's'));
+            iWriteStopTokenFixture(folder, true);
+            [ids, primary] = qwen3_5.internal.stopTokenIds(folder);
+            test.verifyEqual(ids, [1 3 5]);
+            test.verifyEqual(primary, 3);
+        end
+        function stopTokensFallBackToModelConfig(test)
+            folder = tempname;
+            mkdir(folder);
+            test.addTeardown(@() rmdir(folder, 's'));
+            iWriteStopTokenFixture(folder, false);
+            [ids, primary] = qwen3_5.internal.stopTokenIds(folder);
+            test.verifyEqual(ids, 1);
+            test.verifyEqual(primary, 1);
+        end
         function convolutionPreservesChunkHistory(test)
             x = single(randn(6, 11));
             weight = single(randn(6, 4));
@@ -59,6 +77,23 @@ classdef qwen3_5OperatorsTest < matlab.unittest.TestCase
             test.verifyEqual(a(:, 1:3), b(:, 1:3), 'AbsTol', single(1e-6));
         end
     end
+end
+
+function iWriteStopTokenFixture(folder, includeTokenizer)
+cfg = struct('text_config', struct('eos_token_id', 1, 'vocab_size', 8));
+iWriteFixture(fullfile(folder, 'config.json'), cfg);
+if includeTokenizer
+    meta = struct('eos_token', '<|im_end|>', ...
+        'added_tokens_decoder', struct('x3', struct('content', '<|im_end|>'), ...
+        'x5', struct('content', '<|fim_suffix|>')));
+    iWriteFixture(fullfile(folder, 'tokenizer_config.json'), meta);
+end
+end
+
+function iWriteFixture(filePath, value)
+fid = fopen(filePath, 'w');
+closer = onCleanup(@() fclose(fid));
+fprintf(fid, '%s', jsonencode(value));
 end
 
 function [x, w, hp] = iSmallAttention()

@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cctype>
+#include <chrono>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
@@ -89,8 +90,8 @@ static int32_t argmax(const float * logits, int32_t vocabulary) {
 }
 
 int main(int argc, char ** argv) {
-    if (argc < 5 || argc > 6) {
-        std::cerr << "usage: qwen3_5_llama_reference MODEL OUTDIR PROMPT_FILE DECODE_STEPS [PREFILL_CHUNK]\n";
+    if (argc < 5 || argc > 7) {
+        std::cerr << "usage: qwen3_5_llama_reference MODEL OUTDIR PROMPT_FILE DECODE_STEPS [PREFILL_CHUNK] [--summary]\n";
         return 2;
     }
     try {
@@ -102,7 +103,11 @@ int main(int argc, char ** argv) {
         }
         const std::string prompt((std::istreambuf_iterator<char>(prompt_file)), {});
         const int decode_steps = std::stoi(argv[4]);
-        const int chunk = argc == 6 ? std::stoi(argv[5]) : 0;
+        const int chunk = argc >= 6 ? std::stoi(argv[5]) : 0;
+        const bool summary_mode = argc == 7;
+        if (summary_mode && std::string(argv[6]) != "--summary") {
+            throw std::runtime_error("Expected --summary after PREFILL_CHUNK");
+        }
         if (decode_steps < 0 || chunk < 0) {
             throw std::runtime_error("Steps and chunk must be nonnegative");
         }
@@ -128,8 +133,11 @@ int main(int argc, char ** argv) {
                 file << token << '\n';
             }
         }
-        dump_context dump{directory, "", std::ofstream(directory / "tensors.tsv")};
-        dump.index << "stage\tname\td0\td1\td2\td3\n";
+        dump_context dump{directory, "", std::ofstream()};
+        if (!summary_mode) {
+            dump.index.open(directory / "tensors.tsv");
+            dump.index << "stage\tname\td0\td1\td2\td3\n";
+        }
         auto cp = llama_context_default_params();
         cp.n_ctx = std::max(256, count + decode_steps + 64);
         cp.n_batch = std::max(32, count);
@@ -142,7 +150,7 @@ int main(int argc, char ** argv) {
         cp.flash_attn_type = LLAMA_FLASH_ATTN_TYPE_DISABLED;
         cp.offload_kqv = false;
         cp.op_offload = false;
-        cp.cb_eval = dump_tensor;
+        cp.cb_eval = summary_mode ? nullptr : dump_tensor;
         cp.cb_eval_user_data = &dump;
         llama_context * context = llama_init_from_model(model, cp);
         if (!context) {
@@ -161,12 +169,15 @@ int main(int argc, char ** argv) {
                 batch.pos[i] = position + i;
                 batch.n_seq_id[i] = 1;
                 batch.seq_id[i][0] = 0;
-                batch.logits[i] = true;
+                batch.logits[i] = !summary_mode || i == batch.n_tokens - 1;
             }
             if (llama_decode(context, batch) != 0) {
                 throw std::runtime_error("llama_decode failed at " + stage);
             }
             llama_synchronize(context);
+            if (summary_mode) {
+                return argmax(llama_get_logits_ith(context, batch.n_tokens - 1), vocabulary);
+            }
             std::vector<float> logits(static_cast<size_t>(vocabulary) * input.size());
             for (int i = 0; i < batch.n_tokens; ++i) {
                 const float * row = llama_get_logits_ith(context, i);
@@ -180,19 +191,37 @@ int main(int argc, char ** argv) {
         int32_t next = 0;
         int batch_id = 0;
         const int batch_size = chunk ? chunk : count;
+        const auto started = std::chrono::steady_clock::now();
         for (int position = 0; position < count; position += batch_size) {
             const int end = std::min(count, position + batch_size);
             const std::string stage = chunk ? "prefill_" + std::to_string(batch_id++) : "prefill";
             next = evaluate({tokens.begin() + position, tokens.begin() + end}, position, stage);
         }
+        const auto prefill_done = std::chrono::steady_clock::now();
+        int generated_count = 0;
         for (int i = 0; i < decode_steps; ++i) {
             generated << next << '\n';
+            ++generated_count;
             std::vector<char> piece(1024);
             const int length = llama_token_to_piece(vocab, next, piece.data(), piece.size(), 0, true);
             if (length > 0) {
                 decoded.write(piece.data(), length);
             }
+            if (summary_mode && (llama_vocab_is_eog(vocab, next) || i + 1 == decode_steps)) {
+                break;
+            }
             next = evaluate({next}, count + i, "decode_" + std::to_string(i));
+        }
+        const auto finished = std::chrono::steady_clock::now();
+        if (summary_mode) {
+            const double prefill_seconds = std::chrono::duration<double>(prefill_done - started).count();
+            const double decode_seconds = std::chrono::duration<double>(finished - prefill_done).count();
+            std::ofstream metrics(directory / "generation_metrics.json");
+            metrics.precision(12);
+            metrics << "{\"prefill_seconds\":" << prefill_seconds
+                    << ",\"decode_seconds\":" << decode_seconds
+                    << ",\"generation_seconds\":" << prefill_seconds + decode_seconds
+                    << ",\"generated_tokens\":" << generated_count << "}\n";
         }
         llama_batch_free(batch);
         llama_free(context);

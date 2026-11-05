@@ -23,8 +23,7 @@ classdef QwenTokenizer < handle
             module = py.importlib.import_module('tokenizers');
             obj.Backend = module.Tokenizer.from_file( ...
                 char(fullfile(modelFolder, 'tokenizer.json')));
-            cfg = jsondecode(fileread(fullfile(modelFolder, 'config.json')));
-            obj.EosTokenId = cfg.text_config.eos_token_id;
+            [~, obj.EosTokenId] = qwen3_5.internal.stopTokenIds(modelFolder);
         end
         function tokens = encode(obj, text)
             %ENCODE - Convert text to zero-based token IDs

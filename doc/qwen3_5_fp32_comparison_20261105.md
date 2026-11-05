@@ -69,6 +69,24 @@ QWEN3_5_FINAL_CHECK_PASS tests=5 analyzed_files=18
 
 ## 复现
 
+### 补充：与 TestQwen2Summarize 同形式的摘要脚本
+
+`TestQwen3_5Summarize.m` 提供独立文本生成对比：同一输入和 chat prompt，
+双方使用 FP32、greedy、最多 30 个新 tokens，分别打印摘要和生成耗时。
+Python 入口 `tools/qwen3_5_llama_infer.py` 调用 llama.cpp；MATLAB 独立运行
+`generateSummary_Qwen3_5`。参考侧摘要模式不导出中间张量。
+
+实跑结果：双方生成 **28 个 tokens（含 `<|im_end|>`）**，输入 IDs、生成 IDs、
+文本三项比较均为 `true`。生成逻辑现读取 tokenizer 的 chat EOS，
+避免在 `<|im_end|>` 之后继续输出。新增两项终止符测试后，当前单元测试为 **7/7**。
+新增摘要脚本和终止符解析文件也通过 Code Analyzer。
+
+输出位于 `work/tmp/qwen3_5/summarize/`，包括 `matlab_summary_comparison.json`。
+显示的时间排除权重加载；MATLAB 文本入口还包括分词和解码时间，
+这些实耗时间用于查看运行过程。
+
+### 准备参考与重放
+
 将模型放在 `work/models/Qwen3.5-0.8B-FULL/`，将 llama.cpp Git checkout
 放在 `work/deps/llama.cpp/`，然后在仓库根目录执行。两处输入目录均被 Git 忽略。
 以下使用可移植的相对路径；上述实测的模型内容由文末 SHA256 标识。

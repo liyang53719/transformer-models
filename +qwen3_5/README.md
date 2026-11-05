@@ -58,6 +58,24 @@ The generation interface uses greedy decoding. Provide a formatted chat prompt
 when chat-template behavior is needed. Raw text is not automatically wrapped
 in a chat template.
 
+## Side-by-side summary example
+
+After preparing the reference below, run the repository-root script
+`TestQwen3_5Summarize` in MATLAB. Its configuration section contains the input
+text, prompt template, relative model/reference paths, and `maxNewTokens = 30`.
+The default uses a Qwen3.5 chat prompt with thinking disabled for the summary.
+It follows `TestQwen2Summarize.m`: generate a MATLAB summary, launch an
+independent reference through Python, and print both texts and generation times.
+The reference backend is llama.cpp, using the requested FP32 settings.
+The script asserts exact input-token, generated-token, and text equality and
+saves `work/tmp/qwen3_5/summarize/matlab_summary_comparison.json`.
+
+The summary runner keeps intermediate tensor dumps disabled and stops at EOS
+or the configured token limit. Its elapsed times exclude model loading;
+MATLAB's text entry also includes tokenization and decoding. MATLAB runtime
+library paths are removed only from the native reference child's environment.
+The separate `TestQwen3_5Numerics` entry retains the full tensor comparison.
+
 ## Explicit operators
 
 | Operator | Behavior |
@@ -77,6 +95,10 @@ token, the implementation first decays the state, predicts the value from
 the current key, applies the beta-weighted correction, and reads the updated
 state with the normalized query. The query factor `1/sqrt(128)` is applied
 once. A chunk boundary preserves both convolution history and recurrent state.
+
+Generation reads its stop IDs from the model, optional generation config,
+and tokenizer metadata. This includes the tokenizer's chat EOS token, so
+`<|im_end|>` ends a chat response without generating further turns.
 
 ## Python preparation and numerical comparison
 
@@ -122,7 +144,7 @@ existing references in MATLAB:
 reports = TestQwen3_5Numerics(modelFolder, 'work/tmp/qwen3_5/references');
 ```
 
-The entry point also runs five operator tests for chunked convolution,
+The entry point also runs seven tests for stop-token metadata, chunked convolution,
 nonzero-state GDN continuation, the RoPE partial prefix, attention cache
 continuation, and causal masking.
 
